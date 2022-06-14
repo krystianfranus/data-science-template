@@ -1,0 +1,11 @@
+numpy==1.22.4
+matplotlib==3.5.2
+notebook==6.4.12
+hydra-core==1.2.0
+scikit-learn==1.1.1
+mlflow==1.26.1
+
+# --------- code prettifiers --------- #
+black==22.3.0           # code formatting
+isort==5.10.1           # import sorting
+flake8==4.0.1           # code analysis
