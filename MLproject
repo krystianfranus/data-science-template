@@ -10,9 +10,15 @@ entry_points:
 
   train:
     parameters:
+      train_path: path
+      test_path: path
       n_steps: {type: int, default: 200}
       lr: {type: float, default: 0.01}
-    command: "python train.py n_steps={n_steps} lr={lr}"
+    command: "python train.py train_path={train_path} test_path={test_path} n_steps={n_steps} lr={lr}"
 
   main:
-    command: "python workflow.py"
+    parameters:
+      split_ratio: {type: int, default: 0.7}
+      n_steps: {type: int, default: 200}
+      lr: {type: float, default: 0.01}
+    command: "python main.py split_ratio={split_ratio} n_steps={n_steps} lr={lr}"

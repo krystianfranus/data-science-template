@@ -1,2 +1,4 @@
+train_path: "data/processed/train.csv"
+test_path: "data/processed/test.csv"
 n_steps: 200
 lr: 0.01

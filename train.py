@@ -10,15 +10,15 @@ from src.model import LinearRegression
 def main(config: DictConfig):
 
     # mf.set_experiment("my model")
-    with mf.start_run() as mlrun:
+    with mf.start_run():
         # Load data
-        train_data = pd.read_csv("data/train.csv")
-        x_train = train_data["x_train"]
-        y_train = train_data["y_train"]
+        train_data = pd.read_csv(config["train_path"])
+        x_train = train_data["x"]
+        y_train = train_data["y"]
 
-        test_data = pd.read_csv("data/test.csv")
-        x_test = test_data["x_test"]
-        y_test = test_data["y_test"]
+        test_data = pd.read_csv(config["test_path"])
+        x_test = test_data["x"]
+        y_test = test_data["y"]
 
         # Train model
         n_steps = config["n_steps"]

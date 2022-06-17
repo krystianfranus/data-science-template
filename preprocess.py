@@ -16,13 +16,11 @@ def main(config: DictConfig):
         train_data.to_csv("data/processed/train.csv", index=False)
         test_data.to_csv("data/processed/test.csv", index=False)
 
+        # Log artifacts
+        mf.log_artifacts("data/processed/")
+
         # Log params
-        params = {
-            "split_ratio": config["split_ratio"],
-            "train_size": len(train_data),
-            "test_size": len(test_data),
-        }
-        mf.log_params(params)
+        mf.log_param("split_ratio", config["split_ratio"])
 
 
 if __name__ == "__main__":
