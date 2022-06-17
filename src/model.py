@@ -1,10 +1,11 @@
 import numpy as np
 from mlflow import log_metric
+from mlflow.pyfunc import PythonModel
 
 from src.metrics import mse
 
 
-class LinearRegression:
+class LinearRegression(PythonModel):
     def __init__(self, n_steps, lr):
         self.n_steps = n_steps
         self.lr = lr
@@ -16,8 +17,8 @@ class LinearRegression:
 
         for step in range(self.n_steps):
             # Predict
-            y_train_pred = self.predict(x_train)
-            y_test_pred = self.predict(x_test)
+            y_train_pred = self.score(x_train)
+            y_test_pred = self.score(x_test)
 
             # Log metrics
             log_metric("train/mse", mse(y_train, y_train_pred), step=step)
@@ -27,7 +28,11 @@ class LinearRegression:
             self.a -= self.lr * -2 / n * np.sum(x_train * (y_train - y_train_pred))
             self.b -= self.lr * -2 / n * np.sum(y_train - y_train_pred)
 
-    def predict(self, x_test):
+    def predict(self, context, model_input):
+        print("my super prediction")
+        pass
+
+    def score(self, x_test):
         return self.a * x_test + self.b
 
     def get_params(self):

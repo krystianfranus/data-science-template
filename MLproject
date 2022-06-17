@@ -1,0 +1,18 @@
+name: multistep_example
+
+conda_env: conda.yaml
+
+entry_points:
+  preprocess:
+    parameters:
+      split_ratio: {type: int, default: 0.7}
+    command: "python preprocess.py split_ratio={split_ratio}"
+
+  train:
+    parameters:
+      n_steps: {type: int, default: 200}
+      lr: {type: float, default: 0.01}
+    command: "python train.py n_steps={n_steps} lr={lr}"
+
+  main:
+    command: "python workflow.py"
