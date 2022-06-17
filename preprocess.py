@@ -7,7 +7,8 @@ from omegaconf import DictConfig
 
 @hydra.main(version_base=None, config_path="configs/", config_name="preprocess")
 def main(config: DictConfig):
-    with mf.start_run():
+
+    with mf.start_run(run_name="preprocess"):
         data = pd.read_csv("data/raw_data/data.csv")
         mask = np.random.rand(len(data)) < config["split_ratio"]
         train_data = data[mask]

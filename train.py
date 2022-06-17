@@ -9,8 +9,7 @@ from src.model import LinearRegression
 @hydra.main(version_base=None, config_path="configs/", config_name="train")
 def main(config: DictConfig):
 
-    # mf.set_experiment("my model")
-    with mf.start_run():
+    with mf.start_run(run_name="preprocess"):
         # Load data
         train_data = pd.read_csv(config["train_path"])
         x_train = train_data["x"]

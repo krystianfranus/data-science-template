@@ -24,6 +24,10 @@ endif
 install:
 	pip install -e .
 
+## Run pipeline
+run:
+	mlflow run . --experiment-name "my_experiment" --run-name "pipeline"
+
 ## Lint using flake8
 lint:
 	flake8 src
