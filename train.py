@@ -9,7 +9,7 @@ from src.model import LinearRegression
 @hydra.main(version_base=None, config_path="configs/", config_name="train")
 def main(config: DictConfig):
 
-    with mf.start_run(run_name="preprocess"):
+    with mf.start_run(run_name="train"):
         # Load data
         train_data = pd.read_csv(config["train_path"])
         x_train = train_data["x"]
@@ -29,7 +29,7 @@ def main(config: DictConfig):
         hparams = model.get_hparams()
         mf.log_params(hparams)
 
-        # Save model
+        # Log model (as artifact)
         mf.pyfunc.log_model("model", python_model=model)
 
 

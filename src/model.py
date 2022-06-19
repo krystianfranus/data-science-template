@@ -29,8 +29,8 @@ class LinearRegression(PythonModel):
             self.b -= self.lr * -2 / n * np.sum(y_train - y_train_pred)
 
     def predict(self, context, model_input):
-        print("my super prediction")
-        pass
+        x_test = model_input.to_numpy()
+        return self.score(x_test)
 
     def score(self, x_test):
         return self.a * x_test + self.b

@@ -9,16 +9,21 @@ from omegaconf import DictConfig
 def main(config: DictConfig):
 
     with mf.start_run(run_name="preprocess"):
-        data = pd.read_csv("data/raw_data/data.csv")
+        # Load raw data
+        raw_dat_path = "data/raw_data/data.csv"
+        data = pd.read_csv(raw_dat_path)
+
+        # Split data to train/test
         mask = np.random.rand(len(data)) < config["split_ratio"]
         train_data = data[mask]
         test_data = data[~mask]
 
+        # Save train/test data
         train_data.to_csv("data/processed/train.csv", index=False)
         test_data.to_csv("data/processed/test.csv", index=False)
 
         # Log artifacts
-        mf.log_artifacts("data/processed/")
+        mf.log_artifacts("data/processed/", artifact_path="data")
 
         # Log params
         mf.log_param("split_ratio", config["split_ratio"])
