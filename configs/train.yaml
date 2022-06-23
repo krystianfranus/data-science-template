@@ -1,4 +1,11 @@
-train_path: "data/processed/train.csv"
-test_path: "data/processed/test.csv"
+hydra:
+  run:
+    dir: logs/train/${now:%Y-%m-%d}_${now:%H-%M-%S}/
+
+cwd: ${hydra:runtime.cwd}
+processed_data_dir: ${cwd}/data/processed
+
+train_data_path: ${processed_data_dir}/train.csv
+test_data_path: ${processed_data_dir}/test.csv
 n_steps: 200
 lr: 0.01

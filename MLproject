@@ -6,19 +6,19 @@ entry_points:
   preprocess:
     parameters:
       split_ratio: {type: int, default: 0.7}
-    command: "python preprocess.py split_ratio={split_ratio}"
+    command: "python tasks/preprocess.py split_ratio={split_ratio}"
 
   train:
     parameters:
-      train_path: path
-      test_path: path
+      train_data_path: path
+      test_data_path: path
       n_steps: {type: int, default: 200}
       lr: {type: float, default: 0.01}
-    command: "python train.py train_path={train_path} test_path={test_path} n_steps={n_steps} lr={lr}"
+    command: "python tasks/train.py train_data_path={train_data_path} test_data_path={test_data_path} n_steps={n_steps} lr={lr}"
 
   main:
     parameters:
       split_ratio: {type: int, default: 0.7}
       n_steps: {type: int, default: 200}
       lr: {type: float, default: 0.01}
-    command: "python main.py split_ratio={split_ratio} n_steps={n_steps} lr={lr}"
+    command: "python tasks/pipeline.py split_ratio={split_ratio} n_steps={n_steps} lr={lr}"
