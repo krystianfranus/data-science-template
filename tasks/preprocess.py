@@ -4,8 +4,8 @@ import hydra
 import mlflow as mf
 import numpy as np
 import pandas as pd
-from omegaconf import DictConfig
 from hydra.core.hydra_config import HydraConfig
+from omegaconf import DictConfig
 
 log = logging.getLogger(__name__)
 
