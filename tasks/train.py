@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 @hydra.main(version_base=None, config_path="../configs/", config_name="train")
 def main(config: DictConfig):
-    with mf.start_run(run_name="train"):
+    with mf.start_run(run_name="train") as active_run:
         hconfig = HydraConfig.get()
 
         # Load train and test data
@@ -42,9 +42,8 @@ def main(config: DictConfig):
         mf.log_params(hparams)
 
         # Log artifacts
-        log.info("Logging model (as artifact)")
+        log.info(f"Logging (mlflow) artifacts into '{active_run.info.artifact_uri}'")
         mf.pyfunc.log_model("model", python_model=model)
-
         mf.log_artifacts(hconfig.runtime.output_dir, artifact_path="logs/train")
 
 

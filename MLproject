@@ -5,15 +5,15 @@ conda_env: conda.yaml
 entry_points:
   preprocess:
     parameters:
-      split_ratio: {type: int, default: 0.7}
+      split_ratio: int
     command: "python tasks/preprocess.py split_ratio={split_ratio}"
 
   train:
     parameters:
       train_data_path: path
       test_data_path: path
-      n_steps: {type: int, default: 200}
-      lr: {type: float, default: 0.01}
+      n_steps: int
+      lr: float
     command: "python tasks/train.py train_data_path={train_data_path} test_data_path={test_data_path} n_steps={n_steps} lr={lr}"
 
   main:
