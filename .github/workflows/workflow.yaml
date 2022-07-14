@@ -28,7 +28,7 @@ jobs:
           black . --check --verbose
       - name: Check code with isort
         run: |
-          isort . --check
+          isort . --check --verbose
       - name: Test with pytest
         run: |
           pytest
