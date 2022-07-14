@@ -1,6 +1,7 @@
 numpy==1.23.1
 matplotlib==3.5.2
 notebook==6.4.12
+jupyter_nbextensions_configurator==0.4.1
 hydra-core==1.2.0
 mlflow==1.27.0
 
