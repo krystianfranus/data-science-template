@@ -32,4 +32,4 @@ jobs:
           isort . --check --verbose
       - name: Test with pytest
         run: |
-          pytest
+          pytest tests/
