@@ -6,7 +6,7 @@ with open("VERSION", "r") as f:
 with open("README.md", "r") as f:
     long_description = f.read()
 
-with open("requirements.txt") as f:
+with open("requirements.txt", "r") as f:
     install_requires = f.read().split("\n")
 
 setup(
