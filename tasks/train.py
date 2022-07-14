@@ -30,7 +30,7 @@ def main(config: DictConfig):
         y_test = test_data["y"]
 
         # Train model
-        log.info(f"Training")
+        log.info("Training")
         n_steps = config.n_steps
         lr = config.lr
         model = LinearRegression(n_steps, lr)
