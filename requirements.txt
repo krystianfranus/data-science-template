@@ -4,6 +4,7 @@ notebook==6.4.12
 jupyter_nbextensions_configurator==0.4.1
 hydra-core==1.2.0
 mlflow==1.27.0
+pytest==7.1.2
 
 # --------- code prettifiers --------- #
 black==22.6.0           # code formatting
