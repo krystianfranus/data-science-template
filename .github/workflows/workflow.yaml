@@ -25,7 +25,6 @@ jobs:
         run: black . --check --verbose
       - name: Run flake8
         run: flake8 .
-        continue-on-error: true
       - name: Run isort
         run: isort . --check --verbose
       - name: Test with pytest
