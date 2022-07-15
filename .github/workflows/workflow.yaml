@@ -24,7 +24,7 @@ jobs:
       - name: Run black
         run: black . --check --verbose
       - name: Run flake8
-        run: flake8 .
+        run: flake8 . --verbose
       - name: Run isort
         run: isort . --check --verbose
       - name: Test with pytest
