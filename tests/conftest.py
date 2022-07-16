@@ -5,7 +5,12 @@ import pytest
 
 @pytest.fixture(scope="module")
 def data():
-    x = np.random.normal(size=20)
-    y = np.random.normal(size=20)
+    n = 100
+    x = np.random.uniform(-1, 1, size=n)
+    err = np.random.normal(0, 0.2, n)
+
+    a, b = 0.5, 1.0
+    y = a * x + b + err
+
     data = pd.DataFrame({"x": x, "y": y})
     return data
