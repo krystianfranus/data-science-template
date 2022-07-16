@@ -1,4 +1,5 @@
 numpy==1.23.1
+pandas==1.4.3
 matplotlib==3.5.2
 notebook==6.4.12
 jupyter_nbextensions_configurator==0.4.1
@@ -7,6 +8,6 @@ mlflow==1.27.0
 pytest==7.1.2
 
 # --------- code prettifiers --------- #
-flake8==4.0.1           # code analysis
-black==22.6.0           # code formatting
-isort==5.10.1           # import sorting
+flake8==4.0.1
+black==22.6.0
+isort==5.10.1
