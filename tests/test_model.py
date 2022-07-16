@@ -10,7 +10,8 @@ def test_linear_regression_model(data):
     x_train, y_train = train_data["x"], train_data["y"]
     x_test, y_test = test_data["x"], test_data["y"]
 
-    model = LinearRegression(n_steps=100, lr=0.01)
+    n_steps, lr = 100, 0.01
+    model = LinearRegression(n_steps, lr)
     init_a, init_b = 0.0, 0.0
     model.a, model.b = init_a, init_b
 
@@ -29,6 +30,6 @@ def test_linear_regression_model(data):
 @pytest.mark.parametrize(
     "n_steps,lr", [("100", 0.01), (100, "0.01"), (-100, 0.01), (100, -0.01)]
 )
-def test_incorrect_arguments_in_linear_regression_model(n_steps, lr):
+def test_incorrect_args_in_linear_regression_model(n_steps, lr):
     with pytest.raises((TypeError, ValueError)):
-        LinearRegression(n_steps=n_steps, lr=lr)
+        LinearRegression(n_steps, lr)

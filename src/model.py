@@ -29,18 +29,34 @@ class LinearRegression(PythonModel):
     """
 
     def __init__(self, n_steps: int, lr: float):
-        if not isinstance(n_steps, int):
-            raise TypeError("n_steps must be of an integer type")
-        if n_steps < 1:
-            raise ValueError("n_steps must be greater than 0")
-        if not isinstance(lr, float):
-            raise TypeError("lr must be of a float type")
-        if lr <= 0:
-            raise ValueError("lr must be positive")
         self.n_steps = n_steps
         self.lr = lr
         self.a = np.random.uniform()
         self.b = np.random.uniform()
+
+    @property
+    def n_steps(self):
+        return self._n_steps
+
+    @n_steps.setter
+    def n_steps(self, value):
+        if not isinstance(value, int):
+            raise TypeError("n_steps must be of an integer type")
+        if value <= 0:
+            raise ValueError("n_steps must be positive")
+        self._n_steps = value
+
+    @property
+    def lr(self):
+        return self._lr
+
+    @lr.setter
+    def lr(self, value):
+        if not isinstance(value, float):
+            raise TypeError("lr must be of a float type")
+        if value <= 0:
+            raise ValueError("lr must be positive")
+        self._lr = value
 
     def fit(
         self,
