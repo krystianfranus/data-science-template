@@ -4,7 +4,7 @@ import pytest
 
 
 @pytest.fixture
-def raw_data():
+def data():
     x = np.random.normal(size=20)
     y = np.random.normal(size=20)
     data = pd.DataFrame({"x": x, "y": y})
