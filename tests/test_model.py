@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from src.model import LinearRegression
 from src.preprocessing import split_data
@@ -10,13 +11,24 @@ def test_linear_regression_model(data):
     x_test, y_test = test_data["x"], test_data["y"]
 
     model = LinearRegression(n_steps=100, lr=0.01)
-    params = model.get_params()
-    init_a, init_b = params["a"], params["b"]
+    init_a, init_b = 0.0, 0.0
+    model.a, model.b = init_a, init_b
 
     model.fit(x_train, y_train, x_test, y_test)
     params = model.get_params()
     fitted_a, fitted_b = params["a"], params["b"]
 
     a, b = 0.5, 1.0
+    hparams = model.get_hparams()
     assert np.abs(fitted_a - a) < np.abs(init_a - a)
     assert np.abs(fitted_b - b) < np.abs(init_b - b)
+    assert len(params) == 2
+    assert len(hparams) == 2
+
+
+@pytest.mark.parametrize(
+    "n_steps,lr", [("100", 0.01), (100, "0.01"), (-100, 0.01), (100, -0.01)]
+)
+def test_incorrect_arguments_in_linear_regression_model(n_steps, lr):
+    with pytest.raises((TypeError, ValueError)):
+        LinearRegression(n_steps=n_steps, lr=lr)
