@@ -2,10 +2,11 @@ import logging
 
 import hydra
 import mlflow as mf
-import numpy as np
 import pandas as pd
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig
+
+from src.preprocessing import split_data
 
 log = logging.getLogger(__name__)
 
@@ -22,9 +23,7 @@ def main(config: DictConfig):
 
         # Split data to train/test
         log.info("Splitting data")
-        mask = np.random.rand(len(data)) < config.split_ratio
-        train_data = data[mask]
-        test_data = data[~mask]
+        train_data, test_data = split_data(data, config.split_ratio)
 
         # Save train and test data
         train_data_path = config.train_data_path
