@@ -13,8 +13,5 @@ def test_split_data(raw_data, split_ratio):
 
 @pytest.mark.parametrize("split_ratio", [-1, 1.1])
 def test_split_data_with_incorrect_split_ratio(raw_data, split_ratio):
-    data_size = len(raw_data)
     with pytest.raises(ValueError):
-        train_data, test_data = split_data(raw_data, split_ratio)
-        assert len(train_data) == int(data_size * split_ratio)
-        assert len(test_data) == data_size - int(data_size * split_ratio)
+        split_data(raw_data, split_ratio)
