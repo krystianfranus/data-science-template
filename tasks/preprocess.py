@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 import hydra
 import mlflow as mf
@@ -26,6 +27,7 @@ def main(config: DictConfig):
         train_data, test_data = split_data(data, config.split_ratio)
 
         # Save train and test data
+        Path(config.processed_data_dir).mkdir()
         train_data_path = config.train_data_path
         log.info(f"Saving train data into '{train_data_path}'")
         train_data.to_csv(train_data_path, index=False)
