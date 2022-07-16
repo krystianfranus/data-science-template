@@ -78,7 +78,9 @@ class LinearRegression(PythonModel):
         return self.a * x_test + self.b
 
     def get_params(self):
+        """Get model parameters."""
         return {"a": self.a, "b": self.b}
 
     def get_hparams(self):
+        """Get model hyperparameters."""
         return {"n_steps": self.n_steps, "lr": self.lr}

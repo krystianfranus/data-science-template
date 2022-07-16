@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def data():
     x = np.random.normal(size=20)
     y = np.random.normal(size=20)
