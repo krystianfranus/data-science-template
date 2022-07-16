@@ -1,9 +1,9 @@
 .PHONY: create_env install run test clean
 
 ifeq (,$(shell which conda))
-HAS_CONDA=False
+    HAS_CONDA=False
 else
-HAS_CONDA=True
+    HAS_CONDA=True
 endif
 
 #################################################################################
@@ -12,13 +12,13 @@ endif
 
 ## Set up python interpreter environment
 create_env:
-ifeq (,$(shell which conda))
+ifeq (True,$(HAS_CONDA))
 	@echo ">>> Detected conda, creating conda environment."
 	conda create --name ds-template python=3.10.4
+	@echo ">>> New conda env created. Activate with:\nconda activate ds-template"
 else
 	@echo ">>> Install conda first."
 endif
-	@echo ">>> New conda env created. Activate with:\nconda activate ds-template"
 
 ## Install Python Dependencies
 install:
