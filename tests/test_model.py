@@ -9,7 +9,7 @@ def test_linear_regression_model(data):
     x_train, y_train = train_data["x"], train_data["y"]
     x_test, y_test = test_data["x"], test_data["y"]
 
-    model = LinearRegression(n_steps=10, lr=0.01)
+    model = LinearRegression(n_steps=100, lr=0.01)
     params = model.get_params()
     init_a, init_b = params["a"], params["b"]
 
