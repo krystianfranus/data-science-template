@@ -32,7 +32,12 @@ run:
 test:
 	pytest --cov=src tests/
 
-## Delete all compiled Python files
+## Delete all compiled Python files and logs
 clean:
 	find . -type f -name "*.py[co]" -delete
 	find . -type d -name "__pycache__" -delete
+	rm -rf logs/
+	rm -rf mlruns/
+	rm -rf .pytest_cache/
+	rm -rf .coverage
+	rm -rf notebooks/.ipynb_checkpoints/
