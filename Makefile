@@ -1,4 +1,4 @@
-.PHONY: create_env install lint clean
+.PHONY: create_env install run test clean
 
 ifeq (,$(shell which conda))
 HAS_CONDA=False
@@ -14,7 +14,7 @@ endif
 create_env:
 ifeq (,$(shell which conda))
 	@echo ">>> Detected conda, creating conda environment."
-	conda create --name ds-template python=3.8.12
+	conda create --name ds-template python=3.10.4
 else
 	@echo ">>> Install conda first."
 endif
@@ -25,16 +25,14 @@ install:
 	pip install -e .
 
 ## Run pipeline
-run_pipeline:
+run:
 	mlflow run . --experiment-name "pipeline"
 
-## Lint using flake8
-lint:
-	flake8 src
+## Run tests with pytest
+test:
+	pytest --cov=src tests/
 
 ## Delete all compiled Python files
 clean:
 	find . -type f -name "*.py[co]" -delete
 	find . -type d -name "__pycache__" -delete
-
-## TODO: pytest
