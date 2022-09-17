@@ -1,33 +1,43 @@
 import logging
 
 import hydra
-from omegaconf import DictConfig
+import pytorch_lightning as pl
 from clearml import Task
-from src.training.model import LinearRegression
+from omegaconf import DictConfig
+
+from src.training.datamodules.datamodule import SimpleDataModule
+from src.training.models.model import LinearRegression
 
 log = logging.getLogger(__name__)
 
 
 @hydra.main(version_base=None, config_path="../configs/", config_name="train")
 def main(config: DictConfig):
-    task = Task.init(project_name="ds_template", task_name="training")
-    task2 = Task.get_task(task_id="ee986cf15b104262a25dafe5ad30537a")
+    Task.init(project_name="ds_template", task_name="training")
+    task2 = Task.get_task(task_id="210b86a45a71478f8c40c12ae94ea76c")
 
     # Load train data
     train_data = task2.artifacts["train_data"].get()
-    x_train = train_data["x"]
-    y_train = train_data["y"]
 
-    # Load train data
-    test_data = task2.artifacts["test_data"].get()
-    x_test = test_data["x"]
-    y_test = test_data["y"]
+    # Load val data
+    val_data = task2.artifacts["test_data"].get()
 
-    # Train model
-    n_steps = config.n_steps
-    lr = config.lr
-    model = LinearRegression(n_steps, lr)
-    model.fit(x_train, y_train)
+    # Load test data
+    test_data = val_data.copy()
+
+    # MAIN CODE
+    datamodule = SimpleDataModule(train_data, val_data, test_data)
+    model = LinearRegression(lr=config.lr)
+
+    trainer = pl.Trainer(
+        accelerator="gpu",
+        devices=1,
+        max_epochs=5,
+        log_every_n_steps=5,
+        enable_checkpointing=False,
+        logger=False,
+    )
+    trainer.fit(model=model, datamodule=datamodule)
 
 
 if __name__ == "__main__":

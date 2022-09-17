@@ -1,9 +1,14 @@
+defaults:
+  - _self_
+  - override hydra/hydra_logging: disabled
+  - override hydra/job_logging: disabled
+
 hydra:
+  output_subdir: null
   run:
-    dir: logs/preprocess/${now:%Y-%m-%d}_${now:%H-%M-%S}/
+    dir: .
 
 cwd: ${hydra:runtime.cwd}
 raw_data_dir: ${cwd}/data/raw_data
-
 raw_data_path: ${raw_data_dir}/data.csv
 split_ratio: 0.7

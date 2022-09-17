@@ -2,8 +2,9 @@ import logging
 
 import hydra
 import pandas as pd
-from omegaconf import DictConfig
 from clearml import Task
+from omegaconf import DictConfig
+
 from src.preprocessing.preprocessing import split_data
 
 log = logging.getLogger(__name__)

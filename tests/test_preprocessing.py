@@ -1,6 +1,6 @@
 import pytest
 
-from src.preprocessing import split_data
+from src.preprocessing.preprocessing import split_data
 
 
 @pytest.mark.parametrize("split_ratio", [0.12, 0.5])
