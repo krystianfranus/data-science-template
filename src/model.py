@@ -1,12 +1,8 @@
 import numpy as np
-from mlflow import log_metric
-from mlflow.pyfunc import PythonModel
 from numpy import ndarray
 
-from src.metrics import mse
 
-
-class LinearRegression(PythonModel):
+class LinearRegression:
     """Simple linear regression model for one dimensional tasks.
 
     Parameters
@@ -62,8 +58,6 @@ class LinearRegression(PythonModel):
         self,
         x_train: ndarray,
         y_train: ndarray,
-        x_test: ndarray,
-        y_test: ndarray,
     ):
         """Fit parameters.
 
@@ -73,21 +67,12 @@ class LinearRegression(PythonModel):
             Train data.
         y_train : ndarray
             Train labels (ground-truths).
-        x_test : ndarray
-            Test data.
-        y_test : ndarray
-            Test labels (ground-truths).
         """
         n = len(x_train)
 
         for step in range(self.n_steps):
             # Predict
             y_train_pred = self.score(x_train)
-            y_test_pred = self.score(x_test)
-
-            # Log metrics
-            log_metric("train/mse", mse(y_train, y_train_pred), step=step)
-            log_metric("test/mse", mse(y_test, y_test_pred), step=step)
 
             # Optimize (in terms of mse) params with gradient descent
             self.a -= self.lr * -2 / n * np.sum(x_train * (y_train - y_train_pred))
