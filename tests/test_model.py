@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from src.model import LinearRegression
+from src.training.model import LinearRegression
 from src.preprocessing import split_data
 
 

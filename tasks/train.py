@@ -1,32 +1,29 @@
 import logging
 
 import hydra
-import pandas as pd
 from omegaconf import DictConfig
-
-from src.model import LinearRegression
+from clearml import Task
+from src.training.model import LinearRegression
 
 log = logging.getLogger(__name__)
 
 
 @hydra.main(version_base=None, config_path="../configs/", config_name="train")
 def main(config: DictConfig):
+    task = Task.init(project_name="ds_template", task_name="training")
+    task2 = Task.get_task(task_id="ee986cf15b104262a25dafe5ad30537a")
 
-    # Load train and test data
-    train_data_path = config.train_data_path
-    log.info(f"Loading train data from '{train_data_path}'")
-    train_data = pd.read_csv(train_data_path)
+    # Load train data
+    train_data = task2.artifacts["train_data"].get()
     x_train = train_data["x"]
     y_train = train_data["y"]
 
-    test_data_path = config.test_data_path
-    log.info(f"Loading test data from '{test_data_path}'")
-    test_data = pd.read_csv(test_data_path)
+    # Load train data
+    test_data = task2.artifacts["test_data"].get()
     x_test = test_data["x"]
     y_test = test_data["y"]
 
     # Train model
-    log.info("Training")
     n_steps = config.n_steps
     lr = config.lr
     model = LinearRegression(n_steps, lr)
