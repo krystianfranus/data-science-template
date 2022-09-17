@@ -15,6 +15,7 @@ class SimpleDataModule(LightningDataModule):
         test_data: pd.DataFrame,
         batch_size: int = 64,
         num_workers: int = 0,
+        pin_memory: bool = False,
     ):
         super().__init__()
         self.save_hyperparameters(logger=False)
@@ -38,23 +39,26 @@ class SimpleDataModule(LightningDataModule):
     def train_dataloader(self):
         return DataLoader(
             dataset=self.train_dataset,
-            batch_size=self.hparams["batch_size"],
-            num_workers=self.hparams["num_workers"],
+            batch_size=self.hparams.batch_size,
+            num_workers=self.hparams.num_workers,
+            pin_memory=self.hparams.pin_memory,
             shuffle=True,
         )
 
     def val_dataloader(self):
         return DataLoader(
             dataset=self.val_dataset,
-            batch_size=self.hparams["batch_size"],
-            num_workers=self.hparams["num_workers"],
+            batch_size=self.hparams.batch_size,
+            num_workers=self.hparams.num_workers,
+            pin_memory=self.hparams.pin_memory,
             shuffle=False,
         )
 
     def test_dataloader(self):
         return DataLoader(
             dataset=self.test_dataset,
-            batch_size=self.hparams["batch_size"],
-            num_workers=self.hparams["num_workers"],
+            batch_size=self.hparams.batch_size,
+            num_workers=self.hparams.num_workers,
+            pin_memory=self.hparams.pin_memory,
             shuffle=False,
         )
