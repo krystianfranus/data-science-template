@@ -7,7 +7,10 @@ from src.training.models.net import LinearRegressionNet
 
 
 class LinearRegression(pl.LightningModule):
-    def __init__(self, lr):
+    def __init__(
+        self,
+        lr: float = 1e-3,
+    ):
         super().__init__()
         self.save_hyperparameters(logger=False)
 

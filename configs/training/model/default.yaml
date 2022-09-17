@@ -1,0 +1,3 @@
+_target_: src.training.models.model.LinearRegression
+
+lr: 0.001

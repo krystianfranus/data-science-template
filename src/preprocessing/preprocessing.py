@@ -6,27 +6,15 @@ import pandas as pd
 def split_data(
     data: pd.DataFrame,
     split_ratio: float,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """Split data into train and test datasets.
-
-    Parameters
-    ----------
-    data : DataFrame
-        Dataset to be split.
-    split_ratio : float
-        Ratio of splitting. Must be between 0 and 1.
-
-    Returns
-    -------
-    train_data : DataFrame
-        Train dataset.
-    test_data : DataFrame
-        Test dataset.
-    """
-    if not 0 < split_ratio < 1:
-        raise ValueError("split_ratio must be between 0 and 1")
-
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     train_data_size = int(len(data) * split_ratio)
-    train_data = data[:train_data_size].reset_index(drop=True)
-    test_data = data[train_data_size:].reset_index(drop=True)
-    return train_data, test_data
+    rest_data_size = len(data) - train_data_size
+
+    train_data = data[:train_data_size]
+    train_data = train_data.reset_index(drop=True)
+    val_data = data[train_data_size : train_data_size + rest_data_size // 2]
+    val_data = val_data.reset_index(drop=True)
+    test_data = data[train_data_size + rest_data_size // 2 :]
+    test_data = test_data.reset_index(drop=True)
+
+    return train_data, val_data, test_data
