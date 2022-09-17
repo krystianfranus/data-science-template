@@ -6,7 +6,7 @@ import torch
 from src.training.models.net import LinearRegressionNet
 
 
-class LinearRegression(pl.LightningModule):
+class RegressionTask(pl.LightningModule):
     def __init__(
         self,
         lr: float = 1e-3,

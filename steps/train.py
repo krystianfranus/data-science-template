@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 @hydra.main(version_base=None, config_path="../configs/training/", config_name="config")
 def main(config: DictConfig):
     Task.init(project_name="ds_template", task_name="training")
-    task2 = Task.get_task(task_id="fae7a14b882a48a39b3c73d3afac4825")
+    task2 = Task.get_task(task_id="341a67c9ec2c441eb6a25bd588adad6f")
 
     # Load data
     train_data = task2.artifacts["train_data"].get()
