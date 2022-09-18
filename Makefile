@@ -24,9 +24,17 @@ endif
 install:
 	pip install -e .
 
-## Run pipeline
-run:
-	mlflow run . --experiment-name "pipeline"
+## Run preprocessing
+preprocess:
+	python steps/preprocess.py
+
+## Run training
+train:
+	python steps/train.py datamodule.num_workers=5 datamodule.pin_memory=true
+
+## Run prediction
+predict:
+	python steps/predict.py num_workers=5 pin_memory=true
 
 ## Run tests with pytest
 test:

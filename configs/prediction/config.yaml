@@ -1,8 +1,6 @@
 defaults:
   - _self_
-  - datamodule: default.yaml
   - model: default.yaml
-  - callbacks: default.yaml
   - override hydra/hydra_logging: none
   - override hydra/job_logging: stdout
 
@@ -10,3 +8,6 @@ hydra:
   output_subdir: null
   run:
     dir: .
+
+num_workers: 0
+pin_memory: false

@@ -1,0 +1,13 @@
+# https://pytorch-lightning.readthedocs.io/en/stable/api/pytorch_lightning.callbacks.EarlyStopping.html
+early_stopping:
+  _target_: pytorch_lightning.callbacks.EarlyStopping
+  monitor: "val/loss"
+  mode: "min"
+  patience: 2
+
+# https://pytorch-lightning.readthedocs.io/en/latest/api/pytorch_lightning.callbacks.ModelCheckpoint.html#pytorch_lightning.callbacks.ModelCheckpoint
+model_checkpoint:
+  _target_: pytorch_lightning.callbacks.ModelCheckpoint
+  save_last: true
+  save_top_k: 0
+  monitor: "val/loss"

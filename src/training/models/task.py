@@ -33,7 +33,9 @@ class RegressionTask(pl.LightningModule):
     def training_step(self, batch: Any, batch_idx: int):
         loss = self.step(batch)
         self.train_loss(loss)
-        self.log("train/loss", self.train_loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log(
+            "train/loss", self.train_loss, on_step=False, on_epoch=True, prog_bar=True
+        )
         return {"loss": loss}
 
     def validation_step(self, batch: Any, batch_idx: int):
@@ -45,7 +47,9 @@ class RegressionTask(pl.LightningModule):
     def test_step(self, batch: Any, batch_idx: int):
         loss = self.step(batch)
         self.test_loss(loss)
-        self.log("test/loss", self.test_loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log(
+            "test/loss", self.test_loss, on_step=False, on_epoch=True, prog_bar=True
+        )
         return {"loss": loss}
 
     def configure_optimizers(self):

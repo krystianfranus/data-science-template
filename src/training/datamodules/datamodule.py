@@ -4,10 +4,10 @@ import pandas as pd
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset
 
-from src.training.datamodules.dataset import SimpleDataset
+from src.training.datamodules.dataset import TrainDataset
 
 
-class SimpleDataModule(LightningDataModule):
+class CustomDataModule(LightningDataModule):
     def __init__(
         self,
         train_data: pd.DataFrame,
@@ -30,11 +30,11 @@ class SimpleDataModule(LightningDataModule):
 
     def setup(self, stage: Optional[str] = None):
         if stage == "fit":
-            self.train_dataset = SimpleDataset(self.train_data)
-            self.val_dataset = SimpleDataset(self.val_data)
+            self.train_dataset = TrainDataset(self.train_data)
+            self.val_dataset = TrainDataset(self.val_data)
 
         if stage == "test":
-            self.test_dataset = SimpleDataset(self.test_data)
+            self.test_dataset = TrainDataset(self.test_data)
 
     def train_dataloader(self):
         return DataLoader(

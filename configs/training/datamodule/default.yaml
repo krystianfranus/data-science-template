@@ -1,4 +1,4 @@
-_target_: src.training.datamodules.datamodule.SimpleDataModule
+_target_: src.training.datamodules.datamodule.CustomDataModule
 
 batch_size: 64
 num_workers: 0
