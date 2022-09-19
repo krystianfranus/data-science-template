@@ -30,7 +30,7 @@ def main():
         name="prediction_pipe",
         base_task_project="ds_template",
         base_task_name="prediction",
-        cache_executed_step=False,
+        cache_executed_step=True,
         parents=["training_pipe"],
         parameter_override={
             "Args/overrides": "['prev_task_id=${training_pipe.id}', 'num_workers=5', 'pin_memory=true']"  # noqa
@@ -38,10 +38,10 @@ def main():
     )
 
     # for debugging purposes use local jobs
-    # pipe.start_locally()
+    pipe.start_locally()
 
     # Starting the pipeline (in the background)
-    pipe.start()
+    # pipe.start("default")
 
 
 if __name__ == "__main__":
