@@ -16,8 +16,12 @@ log = logging.getLogger(__name__)
     version_base=None, config_path="../configs/prediction/", config_name="config"
 )
 def main(config: DictConfig):
-    Task.init(project_name="ds_template", task_name="prediction")
-    task_prev = Task.get_task(project_name="ds_template", task_name="training")
+    task = Task.init(project_name="ds_template", task_name="prediction")
+
+    # only create the task, we will actually execute it later
+    task.execute_remotely()
+
+    task_prev = Task.get_task(task_id=config.prev_task_id)
 
     log.info("[My Logger] Preparing dataloader")
     x = torch.tensor([[1.0], [1.5]])
@@ -31,8 +35,7 @@ def main(config: DictConfig):
 
     log.info("[My Logger] Instantiating model")
     model = hydra.utils.instantiate(config.model)
-    clearml_model = task_prev.models["output"][-1]
-    ckpt_path = clearml_model.url
+    ckpt_path = task_prev.models["output"][-1].get_local_copy()
 
     log.info("[My Logger] Instantiating trainer")
     trainer = pl.Trainer(

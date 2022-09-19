@@ -10,3 +10,5 @@ hydra:
   output_subdir: null
   run:
     dir: .
+
+prev_task_id: ???

@@ -16,6 +16,9 @@ log = logging.getLogger(__name__)
 def main(config: DictConfig):
     task = Task.init(project_name="ds_template", task_name="preprocessing")
 
+    # only create the task, we will actually execute it later
+    task.execute_remotely()
+
     log.info("[My Logger] Data loading")
     raw_data_path = config.raw_data_path
     data = pd.read_csv(raw_data_path)

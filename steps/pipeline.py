@@ -1,48 +1,48 @@
-from clearml import Task
 from clearml.automation import PipelineController
 
 
-pipe = PipelineController(name="Pipeline demo", project="ds_template", version="0.0.1")
+def main():
+    pipe = PipelineController(
+        name="My Pipeline", project="ds_template", version="0.0.1"
+    )
 
-# pipe.add_parameter(
-#     "url",
-#     "https://files.community.clear.ml/examples%252F.pipelines%252FPipeline%20demo/stage_data.8f17b6316ce442ce8904f6fccb1763de/artifacts/dataset/f6d08388e9bc44c86cab497ad31403c4.iris_dataset.pkl",
-#     "dataset_url",
-# )
+    pipe.set_default_execution_queue("default")
 
-pipe.set_default_execution_queue("default")
+    pipe.add_step(
+        name="preprocessing_pipe",
+        base_task_project="ds_template",
+        base_task_name="preprocessing",
+        cache_executed_step=True,
+    )
 
-pipe.add_step(
-    name="preprocessing_pipe",
-    base_task_project="ds_template",
-    base_task_name="preprocessing",
-    # parameter_override={"General/dataset_url": "${pipeline.url}"},
-)
+    pipe.add_step(
+        name="training_pipe",
+        base_task_project="ds_template",
+        base_task_name="training",
+        cache_executed_step=True,
+        parents=["preprocessing_pipe"],
+        parameter_override={
+            "Args/overrides": "['prev_task_id=${preprocessing_pipe.id}', 'datamodule.num_workers=5', 'datamodule.pin_memory=true']"
+        },
+    )
 
-# pipe.add_step(
-#     name="stage_process",
-#     parents=["stage_data"],
-#     base_task_project="examples",
-#     base_task_name="Pipeline step 2 process dataset",
-#     parameter_override={
-#         "General/dataset_url": "${stage_data.artifacts.dataset.url}",
-#         "General/test_size": 0.25,
-#     },
-#     pre_execute_callback=pre_execute_callback_example,
-#     post_execute_callback=post_execute_callback_example,
-# )
-# pipe.add_step(
-#     name="stage_train",
-#     parents=["stage_process"],
-#     base_task_project="examples",
-#     base_task_name="Pipeline step 3 train model",
-#     parameter_override={"General/dataset_task_id": "${stage_process.id}"},
-# )
-#
-# for debugging purposes use local jobs
-pipe.start_locally()
+    pipe.add_step(
+        name="prediction_pipe",
+        base_task_project="ds_template",
+        base_task_name="prediction",
+        cache_executed_step=False,
+        parents=["training_pipe"],
+        parameter_override={
+            "Args/overrides": "['prev_task_id=${training_pipe.id}', 'num_workers=5', 'pin_memory=true']"
+        },
+    )
 
-# Starting the pipeline (in the background)
-pipe.start()
+    # for debugging purposes use local jobs
+    pipe.start_locally()
 
-print("done")
+    # Starting the pipeline (in the background)
+    pipe.start()
+
+
+if __name__ == "__main__":
+    main()

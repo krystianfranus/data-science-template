@@ -10,8 +10,12 @@ log = logging.getLogger(__name__)
 
 @hydra.main(version_base=None, config_path="../configs/training/", config_name="config")
 def main(config: DictConfig):
-    Task.init(project_name="ds_template", task_name="training")
-    task_prev = Task.get_task(project_name="ds_template", task_name="preprocessing")
+    task = Task.init(project_name="ds_template", task_name="training")
+
+    # only create the task, we will actually execute it later
+    task.execute_remotely()
+
+    task_prev = Task.get_task(task_id=config.prev_task_id)
 
     log.info("[My Logger] Loading data (artifacts)")
     train_data = task_prev.artifacts["train_data"].get()

@@ -30,11 +30,15 @@ preprocess:
 
 ## Run training
 train:
-	python steps/train.py datamodule.num_workers=5 datamodule.pin_memory=true
+	python steps/train.py
 
 ## Run prediction
 predict:
-	python steps/predict.py num_workers=5 pin_memory=true
+	python steps/predict.py
+
+## Run pipeline
+pipeline:
+	python steps/pipeline.py
 
 ## Run tests with pytest
 test:
