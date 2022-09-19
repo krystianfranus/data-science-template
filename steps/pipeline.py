@@ -38,7 +38,7 @@ def main():
     )
 
     # for debugging purposes use local jobs
-    pipe.start_locally()
+    # pipe.start_locally()
 
     # Starting the pipeline (in the background)
     pipe.start()

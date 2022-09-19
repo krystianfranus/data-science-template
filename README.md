@@ -12,6 +12,30 @@ conda activate ds-template
 make install
 ```
 
+## Quick start
+
+```shell
+make preprocess
+make train
+make predict
+make pipeline
+```
+
+Remember about clearml agent based on docker image:
+
+```shell
+clearml-agent daemon --queue default --docker my-docker-image
+```
+
+Building docker image:
+
+```shell
+docker build --tag my-docker-image .
+```
+
+
+
+
 ## References
 
 * https://drivendata.github.io/cookiecutter-data-science
