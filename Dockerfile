@@ -1,5 +1,4 @@
 FROM python:3.10
-WORKDIR /app
-
+WORKDIR src
 COPY . .
-RUN pip3 install -e .
+RUN pip install -e .
