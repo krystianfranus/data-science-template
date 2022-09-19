@@ -22,7 +22,7 @@ def main():
         cache_executed_step=True,
         parents=["preprocessing_pipe"],
         parameter_override={
-            "Args/overrides": "['prev_task_id=${preprocessing_pipe.id}', 'datamodule.num_workers=5', 'datamodule.pin_memory=true']"
+            "Args/overrides": "['prev_task_id=${preprocessing_pipe.id}', 'datamodule.num_workers=5', 'datamodule.pin_memory=true']"  # noqa
         },
     )
 
@@ -33,7 +33,7 @@ def main():
         cache_executed_step=False,
         parents=["training_pipe"],
         parameter_override={
-            "Args/overrides": "['prev_task_id=${training_pipe.id}', 'num_workers=5', 'pin_memory=true']"
+            "Args/overrides": "['prev_task_id=${training_pipe.id}', 'num_workers=5', 'pin_memory=true']"  # noqa
         },
     )
 
