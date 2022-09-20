@@ -2,7 +2,7 @@ import logging
 
 import hydra
 import pandas as pd
-from clearml import Task
+from clearml import Task, TaskTypes
 from omegaconf import DictConfig
 
 from src.preprocessing.preprocessing import split_data
@@ -14,10 +14,14 @@ log = logging.getLogger(__name__)
     version_base=None, config_path="../configs/preprocessing/", config_name="config"
 )
 def main(config: DictConfig):
-    task = Task.init(project_name="ds_template", task_name="preprocessing")
+    task = Task.init(
+        project_name="My project",
+        task_name="Preprocessing",
+        task_type=TaskTypes.data_processing,
+    )
 
-    # only create the task, we will actually execute it later
-    task.execute_remotely()
+    if config.execute_remotely:
+        task.execute_remotely(queue_name="default")
 
     log.info("[My Logger] Data loading")
     raw_data_path = config.raw_data_path

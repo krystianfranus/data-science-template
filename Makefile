@@ -30,11 +30,11 @@ preprocess:
 
 ## Run training
 train:
-	python steps/train.py
+	python steps/train.py datamodule.num_workers=5 datamodule.pin_memory=true
 
-## Run prediction
-predict:
-	python steps/predict.py
+## Run Inferring
+infer:
+	python steps/infer.py num_workers=5 pin_memory=true
 
 ## Run pipeline
 pipeline:

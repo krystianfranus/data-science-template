@@ -2,7 +2,7 @@ import logging
 
 import hydra
 import pytorch_lightning as pl
-from clearml import Task
+from clearml import Task, TaskTypes
 from omegaconf import DictConfig
 
 log = logging.getLogger(__name__)
@@ -10,12 +10,19 @@ log = logging.getLogger(__name__)
 
 @hydra.main(version_base=None, config_path="../configs/training/", config_name="config")
 def main(config: DictConfig):
-    task = Task.init(project_name="ds_template", task_name="training")
+    task = Task.init(
+        project_name="My project",
+        task_name="Training",
+        task_type=TaskTypes.training,
+    )
 
-    # only create the task, we will actually execute it later
-    task.execute_remotely()
+    if config.execute_remotely:
+        task.execute_remotely(queue_name="default")
 
-    task_prev = Task.get_task(task_id=config.prev_task_id)
+    if config.prev_task_id is not None:
+        task_prev = Task.get_task(task_id=config.prev_task_id)
+    else:
+        task_prev = Task.get_task(project_name="My project", task_name="Preprocessing")
 
     log.info("[My Logger] Loading data (artifacts)")
     train_data = task_prev.artifacts["train_data"].get()

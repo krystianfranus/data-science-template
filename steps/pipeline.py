@@ -3,45 +3,45 @@ from clearml.automation import PipelineController
 
 def main():
     pipe = PipelineController(
-        name="My Pipeline", project="ds_template", version="0.0.1"
+        name="My Pipeline", project="My project", version="0.0.1"
     )
 
     pipe.set_default_execution_queue("default")
 
     pipe.add_step(
-        name="preprocessing_pipe",
-        base_task_project="ds_template",
-        base_task_name="preprocessing",
+        name="Preprocessing",
+        base_task_project="My project",
+        base_task_name="Preprocessing",
         cache_executed_step=True,
     )
 
     pipe.add_step(
-        name="training_pipe",
-        base_task_project="ds_template",
-        base_task_name="training",
+        name="Training",
+        base_task_project="My project",
+        base_task_name="Training",
         cache_executed_step=True,
-        parents=["preprocessing_pipe"],
+        parents=["Preprocessing"],
         parameter_override={
-            "Args/overrides": "['prev_task_id=${preprocessing_pipe.id}', 'datamodule.num_workers=5', 'datamodule.pin_memory=true']"  # noqa
+            "Args/overrides": "['prev_task_id=${Preprocessing.id}', 'datamodule.num_workers=5', 'datamodule.pin_memory=true']"  # noqa
         },
     )
 
     pipe.add_step(
-        name="prediction_pipe",
-        base_task_project="ds_template",
-        base_task_name="prediction",
+        name="Inference",
+        base_task_project="My project",
+        base_task_name="Inference",
         cache_executed_step=True,
-        parents=["training_pipe"],
+        parents=["Training"],
         parameter_override={
-            "Args/overrides": "['prev_task_id=${training_pipe.id}', 'num_workers=5', 'pin_memory=true']"  # noqa
+            "Args/overrides": "['prev_task_id=${Training.id}', 'num_workers=5', 'pin_memory=true']"  # noqa
         },
     )
 
     # for debugging purposes use local jobs
-    pipe.start_locally()
+    # pipe.start_locally()
 
     # Starting the pipeline (in the background)
-    # pipe.start("default")
+    pipe.start("default")
 
 
 if __name__ == "__main__":

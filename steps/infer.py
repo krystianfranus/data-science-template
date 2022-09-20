@@ -3,7 +3,7 @@ import logging
 import hydra
 import pytorch_lightning as pl
 import torch
-from clearml import Task
+from clearml import Task, TaskTypes
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
@@ -13,15 +13,22 @@ log = logging.getLogger(__name__)
 
 
 @hydra.main(
-    version_base=None, config_path="../configs/prediction/", config_name="config"
+    version_base=None, config_path="../configs/inference/", config_name="config"
 )
 def main(config: DictConfig):
-    task = Task.init(project_name="ds_template", task_name="prediction")
+    task = Task.init(
+        project_name="My project",
+        task_name="Inference",
+        task_type=TaskTypes.inference,
+    )
 
-    # only create the task, we will actually execute it later
-    task.execute_remotely()
+    if config.execute_remotely:
+        task.execute_remotely(queue_name="default")
 
-    task_prev = Task.get_task(task_id=config.prev_task_id)
+    if config.prev_task_id is not None:
+        task_prev = Task.get_task(task_id=config.prev_task_id)
+    else:
+        task_prev = Task.get_task(project_name="My project", task_name="Training")
 
     log.info("[My Logger] Preparing dataloader")
     x = torch.tensor([[1.0], [1.5]])
@@ -47,7 +54,7 @@ def main(config: DictConfig):
         log_every_n_steps=5,
     )
 
-    log.info("[My Logger] Predicting")
+    log.info("[My Logger] Inferring")
     predictions = trainer.predict(model, dataloader, ckpt_path=ckpt_path)
 
     mean_predictions = torch.mean(torch.concat(predictions))

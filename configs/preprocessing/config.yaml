@@ -9,6 +9,6 @@ hydra:
     dir: .
 
 cwd: ${hydra:runtime.cwd}
-raw_data_dir: ${cwd}/data/raw_data
-raw_data_path: ${raw_data_dir}/data.csv
+execute_remotely: false
+raw_data_path: ${cwd}/data/raw_data/data.csv
 split_ratio: 0.7
