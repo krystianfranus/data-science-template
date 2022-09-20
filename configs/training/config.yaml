@@ -11,5 +11,5 @@ hydra:
   run:
     dir: .
 
-execute_remotely: false
+execute_remotely: true
 prev_task_id: null

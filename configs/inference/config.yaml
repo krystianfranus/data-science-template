@@ -9,7 +9,7 @@ hydra:
   run:
     dir: .
 
-execute_remotely: false
+execute_remotely: true
 prev_task_id: null
 num_workers: 0
 pin_memory: false

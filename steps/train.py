@@ -17,7 +17,7 @@ def main(config: DictConfig):
     )
 
     if config.execute_remotely:
-        task.execute_remotely(queue_name="default")
+        task.execute_remotely()
 
     if config.prev_task_id is not None:
         task_prev = Task.get_task(task_id=config.prev_task_id)

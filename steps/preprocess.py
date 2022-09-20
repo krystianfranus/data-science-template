@@ -21,7 +21,7 @@ def main(config: DictConfig):
     )
 
     if config.execute_remotely:
-        task.execute_remotely(queue_name="default")
+        task.execute_remotely()
 
     log.info("[My Logger] Data loading")
     raw_data_path = config.raw_data_path
