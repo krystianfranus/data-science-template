@@ -2,9 +2,7 @@ from clearml.automation import PipelineController
 
 
 def main():
-    pipe = PipelineController(
-        name="My Pipeline", project="My project", version="0.0.1"
-    )
+    pipe = PipelineController(name="My Pipeline", project="My project", version="0.0.1")
 
     pipe.set_default_execution_queue("default")
 
