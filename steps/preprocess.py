@@ -16,7 +16,7 @@ def main(config: DictConfig):
         project_name="My project",
         task_name="Preprocessing",
         task_type=TaskTypes.data_processing,
-        output_uri="s3://kfranus-bucket/data"
+        output_uri="s3://kfranus-bucket/data",
     )
 
     # if config.execute_remotely:

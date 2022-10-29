@@ -1,6 +1,6 @@
 import logging
-import pandas as pd
 import hydra
+import pandas as pd
 import pytorch_lightning as pl
 from clearml import Task, TaskTypes
 from omegaconf import DictConfig
@@ -10,11 +10,11 @@ log = logging.getLogger(__name__)
 
 @hydra.main(version_base=None, config_path="../configs/training/", config_name="config")
 def main(config: DictConfig):
-    task = Task.init(
+    Task.init(
         project_name="My project",
         task_name="Training",
         task_type=TaskTypes.training,
-        output_uri="s3://kfranus-bucket/model"
+        output_uri="s3://kfranus-bucket/model",
     )
 
     # if config.execute_remotely:
