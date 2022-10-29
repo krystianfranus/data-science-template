@@ -1,5 +1,5 @@
 import logging
-
+import pandas as pd
 import hydra
 import pytorch_lightning as pl
 from clearml import Task, TaskTypes
@@ -14,10 +14,11 @@ def main(config: DictConfig):
         project_name="My project",
         task_name="Training",
         task_type=TaskTypes.training,
+        output_uri="s3://kfranus-bucket/model"
     )
 
-    if config.execute_remotely:
-        task.execute_remotely()
+    # if config.execute_remotely:
+    #     task.execute_remotely()
 
     if config.prev_task_id is not None:
         task_prev = Task.get_task(task_id=config.prev_task_id)
@@ -47,7 +48,7 @@ def main(config: DictConfig):
         callbacks=callbacks,
         accelerator="gpu",
         devices=1,
-        max_epochs=50,
+        max_epochs=3,
         log_every_n_steps=5,
     )
 

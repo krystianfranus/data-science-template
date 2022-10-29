@@ -1,10 +1,15 @@
 _target_: src.training.models.task.RegressionTask
 
 net:
-  _target_: src.training.models.net.LinearRegressionNet
+  _target_: src.training.models.net.MLP
+  n_users: 6040
+  n_items: 3706
+  n_factors: 24
+  n_layers: 3
+  dropout: 0.5
 
 optimizer:
   _target_: torch.optim.Adam
   _partial_: true
-  lr: 0.01
+  lr: 0.001
   weight_decay: 0.0

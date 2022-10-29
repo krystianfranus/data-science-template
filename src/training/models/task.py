@@ -21,13 +21,13 @@ class RegressionTask(pl.LightningModule):
         self.val_loss = MeanMetric()
         self.test_loss = MeanMetric()
 
-    def forward(self, x: torch.Tensor):
-        return self.net(x)
+    def forward(self, users: torch.Tensor, items: torch.Tensor):
+        return self.net(users, items)
 
     def step(self, batch: Any):
-        x, y = batch
-        y_pred = self.forward(x)
-        loss = self.criterion(y_pred, y)
+        users, items, ratings = batch
+        ratings_pred = self.forward(users, items)
+        loss = self.criterion(ratings_pred, ratings)
         return loss
 
     def training_step(self, batch: Any, batch_idx: int):
