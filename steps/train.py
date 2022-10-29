@@ -1,6 +1,6 @@
 import logging
+
 import hydra
-import pandas as pd
 import pytorch_lightning as pl
 from clearml import Task, TaskTypes
 from omegaconf import DictConfig
