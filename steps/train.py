@@ -48,7 +48,7 @@ def main(config: DictConfig):
         callbacks=callbacks,
         accelerator="gpu",
         devices=1,
-        max_epochs=3,
+        max_epochs=20,
         log_every_n_steps=5,
     )
 

@@ -43,7 +43,30 @@ class MLP(nn.Module):
     def forward(self, users: torch.Tensor, items: torch.Tensor):
         embed_users = self.embed_user(users)
         embed_items = self.embed_item(items)
-        interactions = torch.cat((embed_users, embed_items), -1)
-        mlp_output = self.mlp_layers(interactions)
+        embed_concat = torch.cat((embed_users, embed_items), -1)
+        mlp_output = self.mlp_layers(embed_concat)
         output = self.output_layer(mlp_output)
         return output.view(-1)
+
+
+class MF(nn.Module):
+    def __init__(
+        self,
+        n_users: int,
+        n_items: int,
+        embed_size: int,
+    ):
+        super().__init__()
+        self.embed_user = nn.Embedding(n_users, embed_size)
+        self.embed_item = nn.Embedding(n_items, embed_size)
+        self._init_weights()
+
+    def _init_weights(self):
+        nn.init.normal_(self.embed_user.weight, std=0.01)
+        nn.init.normal_(self.embed_item.weight, std=0.01)
+
+    def forward(self, users: torch.Tensor, items: torch.Tensor):
+        embed_users = self.embed_user(users)
+        embed_items = self.embed_item(items)
+        output = torch.mul(embed_users, embed_items).sum(dim=1)
+        return output

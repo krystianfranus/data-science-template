@@ -2,7 +2,7 @@ from typing import Any
 
 import pytorch_lightning as pl
 import torch
-from torchmetrics import MeanMetric
+from torchmetrics import MeanSquaredError
 
 
 class RegressionTask(pl.LightningModule):
@@ -17,9 +17,9 @@ class RegressionTask(pl.LightningModule):
         self.net = net
         self.criterion = torch.nn.MSELoss()
 
-        self.train_loss = MeanMetric()
-        self.val_loss = MeanMetric()
-        self.test_loss = MeanMetric()
+        self.train_rmse = MeanSquaredError(squared=False)
+        self.val_rmse = MeanSquaredError(squared=False)
+        self.test_rmse = MeanSquaredError(squared=False)
 
     def forward(self, users: torch.Tensor, items: torch.Tensor):
         return self.net(users, items)
@@ -28,28 +28,32 @@ class RegressionTask(pl.LightningModule):
         users, items, ratings = batch
         ratings_pred = self.forward(users, items)
         loss = self.criterion(ratings_pred, ratings)
-        return loss
+        return loss, ratings, ratings_pred
 
     def training_step(self, batch: Any, batch_idx: int):
-        loss = self.step(batch)
-        self.train_loss(loss)
+        loss, ratings, ratings_pred = self.step(batch)
+        self.log("train/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+        self.train_rmse(ratings_pred, ratings)
         self.log(
-            "train/loss", self.train_loss, on_step=False, on_epoch=True, prog_bar=True
+            "train/rmse", self.train_rmse, on_step=True, on_epoch=True, prog_bar=True
         )
         return {"loss": loss}
 
     def validation_step(self, batch: Any, batch_idx: int):
-        loss = self.step(batch)
-        self.val_loss(loss)
-        self.log("val/loss", self.val_loss, on_step=False, on_epoch=True, prog_bar=True)
+        loss, ratings, ratings_pred = self.step(batch)
+        self.log("val/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+        self.val_rmse(ratings_pred, ratings)
+        self.log("val/rmse", self.val_rmse, on_step=True, on_epoch=True, prog_bar=True)
         return {"loss": loss}
 
     def test_step(self, batch: Any, batch_idx: int):
-        loss = self.step(batch)
-        self.test_loss(loss)
+        loss, ratings, ratings_pred = self.step(batch)
+        self.log("test/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+        self.test_rmse(ratings_pred, ratings)
         self.log(
-            "test/loss", self.test_loss, on_step=False, on_epoch=True, prog_bar=True
+            "test/rmse", self.test_rmse, on_step=True, on_epoch=True, prog_bar=True
         )
+
         return {"loss": loss}
 
     def configure_optimizers(self):
