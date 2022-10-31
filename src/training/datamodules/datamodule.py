@@ -13,7 +13,7 @@ class CustomDataModule(LightningDataModule):
         train_data: pd.DataFrame,
         val_data: pd.DataFrame,
         test_data: pd.DataFrame,
-        batch_size: int = 64,
+        batch_size: int = 1024,
         num_workers: int = 0,
         pin_memory: bool = False,
     ):
@@ -42,7 +42,7 @@ class CustomDataModule(LightningDataModule):
             batch_size=self.hparams.batch_size,
             num_workers=self.hparams.num_workers,
             pin_memory=self.hparams.pin_memory,
-            shuffle=True,
+            shuffle=False,
         )
 
     def val_dataloader(self):

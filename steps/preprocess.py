@@ -30,6 +30,7 @@ def main(config: DictConfig):
         names=["user", "item", "rating", "timestamp"],
         engine="python",
     )
+    ratings = ratings.sort_values("timestamp").reset_index(drop=True)
 
     log.info("[My Logger] Data splitting")
     train_data = ratings[:700_000].reset_index(drop=True)
