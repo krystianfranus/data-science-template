@@ -1,7 +1,7 @@
 defaults:
   - _self_
   - datamodule: default.yaml
-  - model: mlp.yaml
+  - model: mlp_classification.yaml
   - callbacks: default.yaml
   - override hydra/hydra_logging: none
   - override hydra/job_logging: stdout

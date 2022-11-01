@@ -9,6 +9,6 @@ hydra:
     dir: .
 
 cwd: ${hydra:runtime.cwd}
-execute_remotely: true
 raw_data_path: ${cwd}/data/movielens/ratings.dat
-split_ratio: 0.7
+data_type: "implicit"
+execute_remotely: true

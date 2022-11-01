@@ -31,8 +31,12 @@ def main(config: DictConfig):
     test_data = task_prev.artifacts["test_data"].get()
 
     log.info("[My Logger] Instantiating datamodule")
-    params = {"train_data": train_data, "val_data": val_data, "test_data": test_data}
-    datamodule = hydra.utils.instantiate(config.datamodule, **params)
+    datamodule_params = {
+        "train_data": train_data,
+        "val_data": val_data,
+        "test_data": test_data,
+    }
+    datamodule = hydra.utils.instantiate(config.datamodule, **datamodule_params)
 
     log.info("[My Logger] Instantiating model")
     model = hydra.utils.instantiate(config.model)

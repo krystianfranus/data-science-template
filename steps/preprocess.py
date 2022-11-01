@@ -5,6 +5,8 @@ import pandas as pd
 from clearml import Task, TaskTypes
 from omegaconf import DictConfig
 
+from src.preprocessing.preprocessing import prepare_explicit_data, prepare_implicit_data
+
 log = logging.getLogger(__name__)
 
 
@@ -33,20 +35,11 @@ def main(config: DictConfig):
     ratings = ratings.sort_values("timestamp").reset_index(drop=True)
 
     log.info("[My Logger] Data splitting")
-    train_data = ratings[:700_000].reset_index(drop=True)
-    val_data = ratings[700_000:850_000].reset_index(drop=True)
-    test_data = ratings[850_000:].reset_index(drop=True)
-    data = pd.concat((train_data, val_data, test_data)).reset_index(drop=True)
-
-    user_to_idx = {user: idx for idx, user in enumerate(data["user"].unique())}
-    item_to_idx = {item: idx for idx, item in enumerate(data["item"].unique())}
-
-    train_data["user"] = train_data["user"].map(user_to_idx)
-    val_data["user"] = val_data["user"].map(user_to_idx)
-    test_data["user"] = test_data["user"].map(user_to_idx)
-    train_data["item"] = train_data["item"].map(item_to_idx)
-    val_data["item"] = val_data["item"].map(item_to_idx)
-    test_data["item"] = test_data["item"].map(item_to_idx)
+    train_data, val_data, test_data = None, None, None
+    if config.data_type == "explicit":
+        train_data, val_data, test_data = prepare_explicit_data(ratings)
+    elif config.data_type == "implicit":
+        train_data, val_data, test_data = prepare_implicit_data(ratings)
 
     log.info("[My Logger] Data (artifacts) uploading")
     task.upload_artifact("train_data", train_data)
