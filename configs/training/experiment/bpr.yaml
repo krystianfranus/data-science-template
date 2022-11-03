@@ -1,0 +1,11 @@
+# @package _global_
+
+defaults:
+  - override /datamodule: bpr.yaml
+  - override /model: mlp_bpr_cla.yaml
+
+data_type: "implicit_bpr"
+
+datamodule:
+  num_workers: 5
+  pin_memory: true

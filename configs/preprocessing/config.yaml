@@ -8,7 +8,6 @@ hydra:
   run:
     dir: .
 
-cwd: ${hydra:runtime.cwd}
-raw_data_path: ${cwd}/data/movielens/ratings.dat
-data_type: "implicit"
-execute_remotely: true
+data_type: "explicit"
+execute_locally: true
+execute_remotely: false

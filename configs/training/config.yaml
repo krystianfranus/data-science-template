@@ -1,8 +1,11 @@
 defaults:
   - _self_
-  - datamodule: default.yaml
-  - model: mlp_classification.yaml
+  - datamodule: simple.yaml
+  - model: mf_sim_reg.yaml
   - callbacks: default.yaml
+
+  - experiment: null
+
   - override hydra/hydra_logging: none
   - override hydra/job_logging: stdout
 
@@ -11,5 +14,7 @@ hydra:
   run:
     dir: .
 
-execute_remotely: true
+data_type: "explicit"
+execute_locally: true
+execute_remotely: false
 prev_task_id: null

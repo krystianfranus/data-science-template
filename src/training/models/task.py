@@ -5,7 +5,7 @@ import torch
 from torchmetrics import MeanSquaredError, RetrievalNormalizedDCG
 
 
-class RegressionTask(pl.LightningModule):
+class SimpleRegressionTask(pl.LightningModule):
     def __init__(
         self,
         net: torch.nn.Module,
@@ -19,7 +19,6 @@ class RegressionTask(pl.LightningModule):
 
         self.train_rmse = MeanSquaredError(squared=False)
         self.val_rmse = MeanSquaredError(squared=False)
-        self.test_rmse = MeanSquaredError(squared=False)
 
         self.val_ndcg = RetrievalNormalizedDCG()
 
@@ -27,56 +26,47 @@ class RegressionTask(pl.LightningModule):
         return self.net(users, items)
 
     def step(self, batch: Any):
-        users, items, ratings = batch
-        ratings_pred = self.forward(users, items)
-        loss = self.criterion(ratings_pred, ratings)
-        return loss, ratings, ratings_pred, users
+        users, items, targets = batch
+        targets_pred = self.forward(users, items)
+        loss = self.criterion(targets_pred, targets)
+        return loss, targets, targets_pred, users
 
     def training_step(self, batch: Any, batch_idx: int):
-        loss, ratings, ratings_pred, _ = self.step(batch)
+        loss, targets, targets_pred, _ = self.step(batch)
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.train_rmse(ratings_pred, ratings)
+        self.train_rmse(targets_pred, targets)
         self.log(
             "train/rmse", self.train_rmse, on_step=False, on_epoch=True, prog_bar=False
         )
         return {"loss": loss}
 
     def validation_step(self, batch: Any, batch_idx: int):
-        loss, ratings, ratings_pred, users = self.step(batch)
+        loss, targets, targets_pred, users = self.step(batch)
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.val_rmse(ratings_pred, ratings)
+        self.val_rmse(targets_pred, targets)
         self.log(
             "val/rmse", self.val_rmse, on_step=False, on_epoch=True, prog_bar=False
         )
         return {
             "loss": loss,
-            "ratings": ratings,
-            "ratings_pred": ratings_pred,
+            "targets": targets,
+            "targets_pred": targets_pred,
             "users": users,
         }
 
     def validation_epoch_end(self, outputs: List[Any]):
-        preds = torch.cat(([o["ratings_pred"] for o in outputs]))
-        target = torch.cat(([o["ratings"] for o in outputs]))
+        targets_pred = torch.cat(([o["targets_pred"] for o in outputs]))
+        targets = torch.cat(([o["targets"] for o in outputs]))
         indexes = torch.cat(([o["users"] for o in outputs]))
-        self.val_ndcg(preds, target, indexes=indexes)
+        self.val_ndcg(targets_pred, targets, indexes=indexes)
         self.log("val/ndcg", self.val_ndcg, prog_bar=True)
-
-    def test_step(self, batch: Any, batch_idx: int):
-        loss, ratings, ratings_pred, _ = self.step(batch)
-        self.log("test/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.test_rmse(ratings_pred, ratings)
-        self.log(
-            "test/rmse", self.test_rmse, on_step=False, on_epoch=True, prog_bar=False
-        )
-        return {"loss": loss}
 
     def configure_optimizers(self):
         optimizer = self.hparams.optimizer(params=self.parameters())
         return optimizer
 
 
-class ClassificationTask(pl.LightningModule):
+class SimpleClassificationTask(pl.LightningModule):
     def __init__(
         self,
         net: torch.nn.Module,
@@ -94,37 +84,92 @@ class ClassificationTask(pl.LightningModule):
         return self.net(users, items)
 
     def step(self, batch: Any):
-        users, items, ratings = batch
-        ratings_pred = self.forward(users, items)
-        loss = self.criterion(ratings_pred, ratings)
-        return loss, ratings, ratings_pred, users
+        users, items, targets = batch
+        targets_pred = self.forward(users, items)
+        loss = self.criterion(targets_pred, targets)
+        return loss, targets, targets_pred, users
 
     def training_step(self, batch: Any, batch_idx: int):
-        loss, ratings, ratings_pred, _ = self.step(batch)
+        loss, _, _, _ = self.step(batch)
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         return {"loss": loss}
 
     def validation_step(self, batch: Any, batch_idx: int):
-        loss, ratings, ratings_pred, users = self.step(batch)
+        loss, targets, targets_pred, users = self.step(batch)
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         return {
             "loss": loss,
-            "ratings": ratings,
-            "ratings_pred": ratings_pred,
+            "targets": targets,
+            "targets_pred": targets_pred,
             "users": users,
         }
 
     def validation_epoch_end(self, outputs: List[Any]):
-        preds = torch.cat(([o["ratings_pred"] for o in outputs]))
-        target = torch.cat(([o["ratings"] for o in outputs]))
+        targets_pred = torch.cat(([o["targets_pred"] for o in outputs]))
+        targets = torch.cat(([o["targets"] for o in outputs]))
+        indexes = torch.cat(([o["users"] for o in outputs]))
+        self.val_ndcg(targets_pred, targets, indexes=indexes)
+        self.log("val/ndcg", self.val_ndcg, prog_bar=True)
+
+    def configure_optimizers(self):
+        optimizer = self.hparams.optimizer(params=self.parameters())
+        return optimizer
+
+
+def bpr_loss(positive_sim: torch.Tensor, negative_sim: torch.Tensor) -> torch.Tensor:
+    distance = positive_sim - negative_sim
+    # Probability of ranking given parameters
+    elementwise_bpr_loss = torch.log(torch.sigmoid(distance))
+
+    # The goal is to minimize loss
+    # If negative sim > positive sim -> distance is negative,
+    # but loss is positive
+    bpr_loss = -elementwise_bpr_loss.mean()
+
+    return bpr_loss
+
+
+class BPRClassificationTask(pl.LightningModule):
+    def __init__(
+        self,
+        net: torch.nn.Module,
+        optimizer: torch.optim.Optimizer,
+    ):
+        super().__init__()
+        self.save_hyperparameters(logger=False, ignore=["net"])
+
+        self.net = net
+        # sigmoid ?
+        self.criterion = bpr_loss
+
+        self.val_ndcg = RetrievalNormalizedDCG()
+
+    def forward(self, users: torch.Tensor, items: torch.Tensor):
+        return self.net(users, items)
+
+    def training_step(self, batch: Any, batch_idx: int):
+        users, items_neg, items_pos = batch
+        pred_neg = self.forward(users, items_neg)
+        pred_pos = self.forward(users, items_pos)
+        loss = self.criterion(pred_pos, pred_neg)
+        self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        return {"loss": loss}
+
+    def validation_step(self, batch: Any, batch_idx: int):
+        users, items, targets = batch
+        targets_pred = self.forward(users, items)
+        return {
+            "targets": targets,
+            "targets_pred": targets_pred,
+            "users": users,
+        }
+
+    def validation_epoch_end(self, outputs: List[Any]):
+        preds = torch.cat(([o["targets_pred"] for o in outputs]))
+        target = torch.cat(([o["targets"] for o in outputs]))
         indexes = torch.cat(([o["users"] for o in outputs]))
         self.val_ndcg(preds, target, indexes=indexes)
         self.log("val/ndcg", self.val_ndcg, prog_bar=True)
-
-    def test_step(self, batch: Any, batch_idx: int):
-        loss, ratings, ratings_pred, _ = self.step(batch)
-        self.log("test/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-        return {"loss": loss}
 
     def configure_optimizers(self):
         optimizer = self.hparams.optimizer(params=self.parameters())

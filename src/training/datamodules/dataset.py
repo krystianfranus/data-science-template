@@ -7,7 +7,7 @@ class TrainDataset(Dataset):
     def __init__(self, data: pd.DataFrame):
         self.users = torch.tensor(data["user"].to_numpy())
         self.items = torch.tensor(data["item"].to_numpy())
-        self.ratings = torch.tensor(data["rating"].to_numpy(), dtype=torch.float32)
+        self.targets = torch.tensor(data["target"].to_numpy(), dtype=torch.float32)
 
     def __len__(self):
         return len(self.users)
@@ -15,8 +15,8 @@ class TrainDataset(Dataset):
     def __getitem__(self, idx):
         user = self.users[idx]
         item = self.items[idx]
-        rating = self.ratings[idx]
-        return user, item, rating
+        target = self.targets[idx]
+        return user, item, target
 
 
 # class PredictDataset(Dataset):
@@ -28,3 +28,19 @@ class TrainDataset(Dataset):
 #
 #     def __getitem__(self, idx):
 #         return self.x[idx]
+
+
+class BPRDataset(Dataset):
+    def __init__(self, data: pd.DataFrame):
+        self.users = torch.tensor(data["user"].to_numpy())
+        self.items_neg = torch.tensor(data["item_neg"].to_numpy())
+        self.items_pos = torch.tensor(data["item_pos"].to_numpy())
+
+    def __len__(self):
+        return len(self.users)
+
+    def __getitem__(self, idx):
+        user = self.users[idx]
+        item_neg = self.items_neg[idx]
+        item_pos = self.items_pos[idx]
+        return user, item_neg, item_pos

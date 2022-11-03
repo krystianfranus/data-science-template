@@ -1,4 +1,4 @@
-_target_: src.training.models.task.ClassificationTask
+_target_: src.training.models.task.SimpleClassificationTask
 
 net:
   _target_: src.training.models.net.MLP

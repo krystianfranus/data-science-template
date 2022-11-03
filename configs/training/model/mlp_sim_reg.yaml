@@ -1,4 +1,4 @@
-_target_: src.training.models.task.RegressionTask
+_target_: src.training.models.task.SimpleRegressionTask
 
 net:
   _target_: src.training.models.net.MLP

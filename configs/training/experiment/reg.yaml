@@ -1,0 +1,11 @@
+# @package _global_
+
+defaults:
+  - override /datamodule: simple.yaml
+  - override /model: mlp_sim_reg.yaml
+
+data_type: "explicit"
+
+datamodule:
+  num_workers: 5
+  pin_memory: true
