@@ -1,11 +1,14 @@
 # @package _global_
 
 defaults:
-  - override /datamodule: simple.yaml
-  - override /model: mlp_sim_cla.yaml
+  - override /datamodule: simple
+  - override /model: mlp_sim_cla
 
-data_type: "implicit"
+data_type: implicit
 
 datamodule:
-  num_workers: 5
+  num_workers: 6
   pin_memory: true
+
+trainer:
+  accelerator: gpu

@@ -58,13 +58,7 @@ def main(config: DictConfig):
             callbacks.append(hydra.utils.instantiate(cb_cfg))
 
     log.info("[My Logger] Instantiating trainer")
-    trainer = pl.Trainer(
-        callbacks=callbacks,
-        accelerator="gpu",
-        devices=1,
-        max_epochs=3,
-        log_every_n_steps=5,
-    )
+    trainer = hydra.utils.instantiate(config.trainer, callbacks=callbacks)
 
     log.info("[My Logger] Training")
     trainer.fit(model=model, datamodule=datamodule)

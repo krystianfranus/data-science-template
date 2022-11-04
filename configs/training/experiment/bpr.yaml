@@ -1,11 +1,14 @@
 # @package _global_
 
 defaults:
-  - override /datamodule: bpr.yaml
-  - override /model: mlp_bpr_cla.yaml
+  - override /datamodule: bpr
+  - override /model: mlp_bpr_cla
 
-data_type: "implicit_bpr"
+data_type: implicit_bpr
 
 datamodule:
-  num_workers: 5
+  num_workers: 6
   pin_memory: true
+
+trainer:
+  accelerator: gpu

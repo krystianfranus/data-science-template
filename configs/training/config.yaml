@@ -1,8 +1,9 @@
 defaults:
   - _self_
-  - datamodule: simple.yaml
-  - model: mf_sim_reg.yaml
-  - callbacks: default.yaml
+  - datamodule: simple
+  - model: mf_sim_reg
+  - callbacks: default
+  - trainer: default
 
   - experiment: null
 

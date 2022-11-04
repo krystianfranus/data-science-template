@@ -1,0 +1,6 @@
+_target_: pytorch_lightning.Trainer
+
+accelerator: cpu
+devices: 1
+max_epochs: 3
+num_sanity_val_steps: 0
