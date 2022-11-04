@@ -2,7 +2,6 @@ import logging
 
 import hydra
 import pandas as pd
-import pytorch_lightning as pl
 from clearml import Task, TaskTypes
 from omegaconf import DictConfig
 
@@ -18,11 +17,11 @@ def main(config: DictConfig):
         val_data = pd.read_csv(f"{data_dir}/val_data_{config.data_type}.csv")
         test_data = pd.read_csv(f"{data_dir}/test_data_{config.data_type}.csv")
     else:
-        Task.init(
+        task = Task.init(
             project_name="My project",
             task_name="Training",
             task_type=TaskTypes.training,
-            output_uri="s3://kfranus-bucket/model",
+            output_uri="s3://kfranus-bucket/data-science-template/output/",
         )
 
         if config.prev_task_id is not None:
@@ -37,8 +36,8 @@ def main(config: DictConfig):
         val_data = task_prev.artifacts["val_data"].get()
         test_data = task_prev.artifacts["test_data"].get()
 
-    # if config.execute_remotely:
-    #     task.execute_remotely()
+        if config.execute_with_agent:
+            task.execute_remotely()
 
     log.info("[My Logger] Instantiating datamodule")
     datamodule_params = {

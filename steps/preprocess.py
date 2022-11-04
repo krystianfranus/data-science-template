@@ -20,14 +20,14 @@ def main(config: DictConfig):
             project_name="My project",
             task_name="Preprocessing",
             task_type=TaskTypes.data_processing,
-            output_uri="s3://kfranus-bucket/data-science-template/data/movielens/",
+            output_uri="s3://kfranus-bucket/data-science-template/output/",
         )
         raw_data_path = (
             "s3://kfranus-bucket/data-science-template/data/movielens/ratings.dat"
         )
 
-    # if config.execute_remotely:
-    #     task.execute_remotely()
+        if config.execute_with_agent:
+            task.execute_remotely()
 
     movielens = MovieLens1M(raw_data_path, config.data_type)
     log.info("[My Logger] Data loading")

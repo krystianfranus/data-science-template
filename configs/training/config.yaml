@@ -17,5 +17,5 @@ hydra:
 
 data_type: "explicit"
 execute_locally: true
-execute_remotely: false
+execute_with_agent: false
 prev_task_id: null
