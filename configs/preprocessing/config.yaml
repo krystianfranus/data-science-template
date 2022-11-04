@@ -9,5 +9,5 @@ hydra:
     dir: .
 
 data_type: "explicit"
-execute_locally: true
-execute_with_agent: false
+execute_locally: false
+draft_mode: false

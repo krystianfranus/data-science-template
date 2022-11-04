@@ -26,7 +26,7 @@ def main(config: DictConfig):
             "s3://kfranus-bucket/data-science-template/data/movielens/ratings.dat"
         )
 
-        if config.execute_with_agent:
+        if config.draft_mode:
             task.execute_remotely()
 
     movielens = MovieLens1M(raw_data_path, config.data_type)

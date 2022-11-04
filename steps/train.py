@@ -36,7 +36,7 @@ def main(config: DictConfig):
         val_data = task_prev.artifacts["val_data"].get()
         test_data = task_prev.artifacts["test_data"].get()
 
-        if config.execute_with_agent:
+        if config.draft_mode:
             task.execute_remotely()
 
     log.info("[My Logger] Instantiating datamodule")
