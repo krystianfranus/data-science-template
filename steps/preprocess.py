@@ -4,8 +4,6 @@ import hydra
 from clearml import Task, TaskTypes
 from omegaconf import DictConfig
 
-from src.preprocessing.preprocessing import MovieLens1M
-
 log = logging.getLogger(__name__)
 
 
@@ -14,7 +12,7 @@ log = logging.getLogger(__name__)
 )
 def main(config: DictConfig):
     if config.execute_locally:
-        raw_data_path = "data/tmp/movielens/ratings.dat"
+        remote_data = False
     else:
         task = Task.init(
             project_name="My project",
@@ -22,30 +20,20 @@ def main(config: DictConfig):
             task_type=TaskTypes.data_processing,
             output_uri="s3://kfranus-bucket/data-science-template/output/",
         )
-        raw_data_path = (
-            "s3://kfranus-bucket/data-science-template/data/movielens/ratings.dat"
-        )
+        remote_data = True
 
         if config.draft_mode:
             task.execute_remotely()
 
-    movielens = MovieLens1M(raw_data_path, config.data_type)
+    data = hydra.utils.instantiate(config.data, remote_data=remote_data)
     log.info("[My Logger] Data loading")
-    movielens.preprocess()
+    data.preprocess()
     log.info("[My Logger] Data parsing")
-    train_data, val_data, test_data = movielens.prepare_data()
+    train_data, val_data, test_data = data.prepare_data()
 
     log.info("[My Logger] Data (artifacts) uploading")
     if config.execute_locally:
-        train_data.to_csv(
-            f"data/tmp/movielens/train_data_{config.data_type}.csv", index=False
-        )
-        val_data.to_csv(
-            f"data/tmp/movielens/val_data_{config.data_type}.csv", index=False
-        )
-        test_data.to_csv(
-            f"data/tmp/movielens/test_data_{config.data_type}.csv", index=False
-        )
+        data.save_data(train_data, val_data, test_data)
     else:
         task.upload_artifact("train_data", train_data)
         task.upload_artifact("val_data", val_data)

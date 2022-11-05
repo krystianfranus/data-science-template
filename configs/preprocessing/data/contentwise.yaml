@@ -1,0 +1,4 @@
+_target_: src.preprocessing.preprocessing.ContentWise
+
+remote_data: false
+data_type: implicit

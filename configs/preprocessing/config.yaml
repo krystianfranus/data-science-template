@@ -1,5 +1,6 @@
 defaults:
   - _self_
+  - data: movielens
   - override hydra/hydra_logging: none
   - override hydra/job_logging: stdout
 
@@ -8,6 +9,5 @@ hydra:
   run:
     dir: .
 
-data_type: "explicit"
-execute_locally: false
+execute_locally: true
 draft_mode: false

@@ -1,0 +1,4 @@
+_target_: src.preprocessing.preprocessing.MovieLens1M
+
+remote_data: false
+data_type: explicit
