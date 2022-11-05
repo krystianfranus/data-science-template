@@ -2,8 +2,8 @@ _target_: src.training.models.task.SimpleClassificationTask
 
 net:
   _target_: src.training.models.net.MLP
-  n_users: 6040
-  n_items: 3706
+  n_users: 6040  # 28597
+  n_items: 3706  # 3935
   n_factors: 15
   n_layers: 3
   dropout: 0.5

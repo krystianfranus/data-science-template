@@ -5,7 +5,7 @@ defaults:
   - callbacks: default
   - trainer: default
 
-  - experiment: null
+  - experiment: reg
 
   - override hydra/hydra_logging: none
   - override hydra/job_logging: stdout
@@ -16,6 +16,6 @@ hydra:
     dir: .
 
 data_type: "explicit"
-execute_locally: false
+execute_locally: true
 draft_mode: false
 prev_task_id: null
