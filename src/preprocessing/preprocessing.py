@@ -108,6 +108,8 @@ class ContentWise:
         train_data, val_data, test_data = None, None, None
         if self.data_type == "implicit":
             train_data, val_data, test_data = self._prepare_implicit()
+        elif self.data_type == "implicit_bpr":
+            train_data, val_data, test_data = self._prepare_implicit_bpr()
         return train_data, val_data, test_data
 
     def _prepare_implicit(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -140,18 +142,77 @@ class ContentWise:
         merged.loc[
             merged["series_id"] != merged["recommended_series_list"], "target"
         ] = 0
-        merged = merged[["user_id", "series_id", "target", "utc_ts_milliseconds"]]
+        merged = merged[
+            ["user_id", "recommended_series_list", "target", "utc_ts_milliseconds"]
+        ]
         merged["target"] = merged["target"].astype(int)
         merged.columns = ["user", "item", "target", "timestamp"]
+
+        merged = merged.groupby(["user", "item"]).agg({"target": "sum"}).reset_index()
+        merged.loc[merged["target"] > 0, "target"] = 1
 
         user_to_idx = {user: idx for idx, user in enumerate(merged["user"].unique())}
         item_to_idx = {item: idx for idx, item in enumerate(merged["item"].unique())}
         merged["user"] = merged["user"].map(user_to_idx)
         merged["item"] = merged["item"].map(item_to_idx)
 
-        train_data = merged[:2_500_000].reset_index(drop=True)
-        val_data = merged[2_500_000:3_000_000].reset_index(drop=True)
-        test_data = merged[3_000_000:].reset_index(drop=True)
+        train_data = merged[:800_000].reset_index(drop=True)
+        val_data = merged[800_000:1_000_000].reset_index(drop=True)
+        test_data = merged[1_000_000:].reset_index(drop=True)
+
+        return train_data, val_data, test_data
+
+    def _prepare_implicit_bpr(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        self.data = self.data[self.data["interaction_type"] == 0].reset_index(drop=True)
+        columns = [
+            "utc_ts_milliseconds",
+            "user_id",
+            "series_id",
+            "recommendation_id",
+            "vision_factor",
+        ]
+        self.data = self.data[columns]
+
+        self.data2["recommended_series_list"] = (
+            self.data2["recommended_series_list"]
+            .str.replace(r"(\[|\])", "", regex=True)
+            .str.split()
+        )
+        self.data2 = self.data2.explode("recommended_series_list").reset_index(
+            drop=True
+        )
+
+        merged = self.data.merge(self.data2, "inner", "recommendation_id")
+        merged["recommended_series_list"] = pd.to_numeric(
+            merged["recommended_series_list"]
+        )
+        merged.loc[
+            merged["series_id"] == merged["recommended_series_list"], "target"
+        ] = 1
+        merged.loc[
+            merged["series_id"] != merged["recommended_series_list"], "target"
+        ] = 0
+        merged = merged[
+            ["user_id", "recommended_series_list", "target", "utc_ts_milliseconds"]
+        ]
+        merged["target"] = merged["target"].astype(int)
+        merged.columns = ["user", "item", "target", "timestamp"]
+
+        merged = merged.groupby(["user", "item"]).agg({"target": "sum"}).reset_index()
+        merged.loc[merged["target"] > 0, "target"] = 1
+
+        user_to_idx = {user: idx for idx, user in enumerate(merged["user"].unique())}
+        item_to_idx = {item: idx for idx, item in enumerate(merged["item"].unique())}
+        merged["user"] = merged["user"].map(user_to_idx)
+        merged["item"] = merged["item"].map(item_to_idx)
+
+        train_data = merged[:800_000].reset_index(drop=True)
+        tmp0 = train_data.loc[train_data["target"] == 0, ["user", "item"]]
+        tmp1 = train_data.loc[train_data["target"] == 1, ["user", "item"]]
+        train_data = tmp0.merge(tmp1, "inner", "user", suffixes=("_neg", "_pos"))
+        train_data = train_data.sample(frac=0.2, random_state=0).reset_index(drop=True)
+        val_data = merged[800_000:1_000_000].reset_index(drop=True)
+        test_data = merged[1_000_000:].reset_index(drop=True)
 
         return train_data, val_data, test_data
 
