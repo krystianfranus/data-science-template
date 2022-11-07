@@ -31,6 +31,7 @@ class SimpleRegressionTask(pl.LightningModule):
         loss = self.criterion(targets_pred, targets)
         return loss, targets, targets_pred, users
 
+    # def training_step(self, batch: Any, batch_idx: int, optimizer_idx: int):
     def training_step(self, batch: Any, batch_idx: int):
         loss, targets, targets_pred, _ = self.step(batch)
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
@@ -64,6 +65,12 @@ class SimpleRegressionTask(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = self.hparams.optimizer(params=self.parameters())
         return optimizer
+        # optimizer1 = torch.optim.SparseAdam(list(self.parameters())[:2], lr=5e-2)
+        # optimizer2 = torch.optim.Adam(list(self.parameters())[2:],
+        #                               lr=1e-3, weight_decay=1e-4)
+        # return optimizer1, optimizer2
+        # optimizer = torch.optim.Adam(self.parameters(), lr=1e-3, weight_decay=1e-4)
+        # return optimizer
 
 
 class SimpleClassificationTask(pl.LightningModule):

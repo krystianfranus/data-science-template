@@ -13,6 +13,10 @@ class MLP(nn.Module):
     ):
         super().__init__()
 
+        # self.embed_user = nn.Embedding(n_users,
+        #                                n_factors * (2 ** (n_layers - 1)), sparse=True)
+        # self.embed_item = nn.Embedding(n_items,
+        #                                n_factors * (2 ** (n_layers - 1)), sparse=True)
         self.embed_user = nn.Embedding(n_users, n_factors * (2 ** (n_layers - 1)))
         self.embed_item = nn.Embedding(n_items, n_factors * (2 ** (n_layers - 1)))
 
