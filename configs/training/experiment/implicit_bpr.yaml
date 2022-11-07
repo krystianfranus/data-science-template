@@ -2,7 +2,9 @@
 
 defaults:
   - override /datamodule: bpr
-  - override /model: mlp_bpr_cla
+  - override /net: mlp  # mf
+  - override /optimizer: adam
+  - override /model: bpr
 
 data_type: implicit_bpr
 

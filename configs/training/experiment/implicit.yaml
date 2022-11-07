@@ -2,7 +2,9 @@
 
 defaults:
   - override /datamodule: simple
-  - override /model: mlp_sim_cla
+  - override /net: mlp  # mf
+  - override /optimizer: adam
+  - override /model: cla
 
 data_type: implicit
 

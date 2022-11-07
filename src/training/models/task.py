@@ -5,7 +5,7 @@ import torch
 from torchmetrics import MeanSquaredError, RetrievalNormalizedDCG
 
 
-class SimpleRegressionTask(pl.LightningModule):
+class RegressionTask(pl.LightningModule):
     def __init__(
         self,
         net: torch.nn.Module,
@@ -69,11 +69,9 @@ class SimpleRegressionTask(pl.LightningModule):
         # optimizer2 = torch.optim.Adam(list(self.parameters())[2:],
         #                               lr=1e-3, weight_decay=1e-4)
         # return optimizer1, optimizer2
-        # optimizer = torch.optim.Adam(self.parameters(), lr=1e-3, weight_decay=1e-4)
-        # return optimizer
 
 
-class SimpleClassificationTask(pl.LightningModule):
+class ClassificationTask(pl.LightningModule):
     def __init__(
         self,
         net: torch.nn.Module,
@@ -136,7 +134,7 @@ def bpr_loss(positive_sim: torch.Tensor, negative_sim: torch.Tensor) -> torch.Te
     return bpr_loss
 
 
-class BPRClassificationTask(pl.LightningModule):
+class BPRTask(pl.LightningModule):
     def __init__(
         self,
         net: torch.nn.Module,

@@ -2,7 +2,9 @@
 
 defaults:
   - override /datamodule: simple
-  - override /model: mlp_sim_reg
+  - override /net: mlp  # mf
+  - override /optimizer: adam
+  - override /model: reg
 
 data_type: explicit
 
