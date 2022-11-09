@@ -6,6 +6,8 @@ from torch.utils.data import DataLoader, Dataset
 
 from src.training.datamodules.dataset import BPRDataset, TrainDataset
 
+# from src.training.datamodules.dataset import CustomIterableDataset
+
 
 class SimpleDataModule(LightningDataModule):
     def __init__(
@@ -32,9 +34,12 @@ class SimpleDataModule(LightningDataModule):
         if stage == "fit":
             self.train_dataset = TrainDataset(self.train_data)
             self.val_dataset = TrainDataset(self.val_data)
+            # self.train_dataset = CustomIterableDataset(self.train_data)
+            # self.val_dataset = CustomIterableDataset(self.val_data)
 
         if stage == "test":
             self.test_dataset = TrainDataset(self.test_data)
+            # self.test_dataset = CustomIterableDataset(self.test_data)
 
     def train_dataloader(self):
         return DataLoader(
@@ -42,7 +47,7 @@ class SimpleDataModule(LightningDataModule):
             batch_size=self.hparams.batch_size,
             num_workers=self.hparams.num_workers,
             pin_memory=self.hparams.pin_memory,
-            shuffle=True,
+            shuffle=False,
         )
 
     def val_dataloader(self):

@@ -21,6 +21,7 @@ class MovieLens1M:
 
     def preprocess(self):
         self.data = self.data.sort_values("timestamp").reset_index(drop=True)
+        self.data = self.data.drop(columns=["timestamp"])
 
     def prepare_data(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         train_data, val_data, test_data = None, None, None
@@ -80,10 +81,14 @@ class MovieLens1M:
 
     def save_data(self, train_data, val_data, test_data):
         train_data.to_csv(
-            f"data/movielens/train_data_{self.data_type}.csv", index=False
+            f"data/movielens/train_data_{self.data_type}.csv", index=False, header=False
         )
-        val_data.to_csv(f"data/movielens/val_data_{self.data_type}.csv", index=False)
-        test_data.to_csv(f"data/movielens/test_data_{self.data_type}.csv", index=False)
+        val_data.to_csv(
+            f"data/movielens/val_data_{self.data_type}.csv", index=False, header=False
+        )
+        test_data.to_csv(
+            f"data/movielens/test_data_{self.data_type}.csv", index=False, header=False
+        )
 
 
 class ContentWise:

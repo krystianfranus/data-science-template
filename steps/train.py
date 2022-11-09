@@ -12,10 +12,13 @@ log = logging.getLogger(__name__)
 def main(config: DictConfig):
     if config.execute_locally:
         log.info("[My Logger] Loading data (artifacts)")
-        data_dir = "data/movielens/"
+        data_dir = "data/movielens"
         train_data = pd.read_csv(f"{data_dir}/train_data_{config.data_type}.csv")
         val_data = pd.read_csv(f"{data_dir}/val_data_{config.data_type}.csv")
         test_data = pd.read_csv(f"{data_dir}/test_data_{config.data_type}.csv")
+        # train_data = f"{data_dir}/train_data_{config.data_type}.csv"  # Iterable
+        # val_data = f"{data_dir}/val_data_{config.data_type}.csv"  # Iterable
+        # test_data = f"{data_dir}/test_data_{config.data_type}.csv"  # Iterable
     else:
         task = Task.init(
             project_name="My project",
