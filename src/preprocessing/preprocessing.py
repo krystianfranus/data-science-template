@@ -147,9 +147,7 @@ class ContentWise:
         merged.loc[
             merged["series_id"] != merged["recommended_series_list"], "target"
         ] = 0
-        merged = merged[
-            ["user_id", "recommended_series_list", "target"]
-        ]
+        merged = merged[["user_id", "recommended_series_list", "target"]]
         merged["target"] = merged["target"].astype(int)
         merged.columns = ["user", "item", "target"]
 
@@ -197,9 +195,7 @@ class ContentWise:
         merged.loc[
             merged["series_id"] != merged["recommended_series_list"], "target"
         ] = 0
-        merged = merged[
-            ["user_id", "recommended_series_list", "target"]
-        ]
+        merged = merged[["user_id", "recommended_series_list", "target"]]
         merged["target"] = merged["target"].astype(int)
         merged.columns = ["user", "item", "target"]
 
@@ -223,9 +219,15 @@ class ContentWise:
 
     def save_data(self, train_data, val_data, test_data):
         train_data.to_csv(
-            f"data/contentwise/train_data_{self.data_type}.csv", index=False, header=False
+            f"data/contentwise/train_data_{self.data_type}.csv",
+            index=False,
+            header=False,
         )
-        val_data.to_csv(f"data/contentwise/val_data_{self.data_type}.csv", index=False, header=False)
+        val_data.to_csv(
+            f"data/contentwise/val_data_{self.data_type}.csv", index=False, header=False
+        )
         test_data.to_csv(
-            f"data/contentwise/test_data_{self.data_type}.csv", index=False, header=False
+            f"data/contentwise/test_data_{self.data_type}.csv",
+            index=False,
+            header=False,
         )
