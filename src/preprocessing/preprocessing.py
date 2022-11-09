@@ -148,10 +148,10 @@ class ContentWise:
             merged["series_id"] != merged["recommended_series_list"], "target"
         ] = 0
         merged = merged[
-            ["user_id", "recommended_series_list", "target", "utc_ts_milliseconds"]
+            ["user_id", "recommended_series_list", "target"]
         ]
         merged["target"] = merged["target"].astype(int)
-        merged.columns = ["user", "item", "target", "timestamp"]
+        merged.columns = ["user", "item", "target"]
 
         merged = merged.groupby(["user", "item"]).agg({"target": "sum"}).reset_index()
         merged.loc[merged["target"] > 0, "target"] = 1
@@ -198,10 +198,10 @@ class ContentWise:
             merged["series_id"] != merged["recommended_series_list"], "target"
         ] = 0
         merged = merged[
-            ["user_id", "recommended_series_list", "target", "utc_ts_milliseconds"]
+            ["user_id", "recommended_series_list", "target"]
         ]
         merged["target"] = merged["target"].astype(int)
-        merged.columns = ["user", "item", "target", "timestamp"]
+        merged.columns = ["user", "item", "target"]
 
         merged = merged.groupby(["user", "item"]).agg({"target": "sum"}).reset_index()
         merged.loc[merged["target"] > 0, "target"] = 1
@@ -223,9 +223,9 @@ class ContentWise:
 
     def save_data(self, train_data, val_data, test_data):
         train_data.to_csv(
-            f"data/contentwise/train_data_{self.data_type}.csv", index=False
+            f"data/contentwise/train_data_{self.data_type}.csv", index=False, header=False
         )
-        val_data.to_csv(f"data/contentwise/val_data_{self.data_type}.csv", index=False)
+        val_data.to_csv(f"data/contentwise/val_data_{self.data_type}.csv", index=False, header=False)
         test_data.to_csv(
-            f"data/contentwise/test_data_{self.data_type}.csv", index=False
+            f"data/contentwise/test_data_{self.data_type}.csv", index=False, header=False
         )
