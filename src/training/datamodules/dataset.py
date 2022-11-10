@@ -58,9 +58,9 @@ class CustomIterableDataset(IterableDataset):
 
 class BPRDataset(Dataset):
     def __init__(self, data: pd.DataFrame):
-        self.users = torch.tensor(data["user"].to_numpy())
-        self.items_neg = torch.tensor(data["item_neg"].to_numpy())
-        self.items_pos = torch.tensor(data["item_pos"].to_numpy())
+        self.users = torch.tensor(data.iloc[:, 0].to_numpy())
+        self.items_neg = torch.tensor(data.iloc[:, 1].to_numpy())
+        self.items_pos = torch.tensor(data.iloc[:, 2].to_numpy())
 
     def __len__(self):
         return len(self.users)

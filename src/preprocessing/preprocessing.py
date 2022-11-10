@@ -34,14 +34,32 @@ class MovieLens1M:
         return train_data, val_data, test_data
 
     def _prepare_explicit(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        user_to_idx = {user: idx for idx, user in enumerate(self.data["user"].unique())}
-        item_to_idx = {item: idx for idx, item in enumerate(self.data["item"].unique())}
-        self.data["user"] = self.data["user"].map(user_to_idx)
-        self.data["item"] = self.data["item"].map(item_to_idx)
+        # Split data into train/val/test
+        train_data = self.data[:900_000].reset_index(drop=True)
+        val_data = self.data[900_000:950_000].reset_index(drop=True)
+        test_data = self.data[950_000:].reset_index(drop=True)
 
-        train_data = self.data[:700_000].reset_index(drop=True)
-        val_data = self.data[700_000:850_000].reset_index(drop=True)
-        test_data = self.data[850_000:].reset_index(drop=True)
+        # Prepare unique train user and items
+        train_users = train_data["user"].unique()
+        train_items = train_data["item"].unique()
+
+        # Filter val/test data
+        val_data = val_data[val_data["user"].isin(train_users)]
+        val_data = val_data[val_data["item"].isin(train_items)]
+        val_data = val_data.reset_index(drop=True)
+        test_data = test_data[test_data["user"].isin(train_users)]
+        test_data = test_data[test_data["item"].isin(train_items)]
+        test_data = test_data.reset_index(drop=True)
+
+        # Map idx
+        user_to_idx = {user: idx for idx, user in enumerate(train_users)}
+        item_to_idx = {item: idx for idx, item in enumerate(train_items)}
+        train_data["user"] = train_data["user"].map(user_to_idx)
+        train_data["item"] = train_data["item"].map(item_to_idx)
+        val_data["user"] = val_data["user"].map(user_to_idx)
+        val_data["item"] = val_data["item"].map(item_to_idx)
+        test_data["user"] = test_data["user"].map(user_to_idx)
+        test_data["item"] = test_data["item"].map(item_to_idx)
 
         return train_data, val_data, test_data
 
@@ -49,33 +67,72 @@ class MovieLens1M:
         self.data.loc[self.data["target"] < 4, "target"] = 0
         self.data.loc[self.data["target"] >= 4, "target"] = 1
 
-        user_to_idx = {user: idx for idx, user in enumerate(self.data["user"].unique())}
-        item_to_idx = {item: idx for idx, item in enumerate(self.data["item"].unique())}
-        self.data["user"] = self.data["user"].map(user_to_idx)
-        self.data["item"] = self.data["item"].map(item_to_idx)
+        # Split data into train/val/test
+        train_data = self.data[:900_000].reset_index(drop=True)
+        val_data = self.data[900_000:950_000].reset_index(drop=True)
+        test_data = self.data[950_000:].reset_index(drop=True)
 
-        train_data = self.data[:700_000].reset_index(drop=True)
-        val_data = self.data[700_000:850_000].reset_index(drop=True)
-        test_data = self.data[850_000:].reset_index(drop=True)
+        # Prepare unique train user and items
+        train_users = train_data["user"].unique()
+        train_items = train_data["item"].unique()
+
+        # Filter val/test data
+        val_data = val_data[val_data["user"].isin(train_users)]
+        val_data = val_data[val_data["item"].isin(train_items)]
+        val_data = val_data.reset_index(drop=True)
+        test_data = test_data[test_data["user"].isin(train_users)]
+        test_data = test_data[test_data["item"].isin(train_items)]
+        test_data = test_data.reset_index(drop=True)
+
+        # Map idx
+        user_to_idx = {user: idx for idx, user in enumerate(train_users)}
+        item_to_idx = {item: idx for idx, item in enumerate(train_items)}
+        train_data["user"] = train_data["user"].map(user_to_idx)
+        train_data["item"] = train_data["item"].map(item_to_idx)
+        val_data["user"] = val_data["user"].map(user_to_idx)
+        val_data["item"] = val_data["item"].map(item_to_idx)
+        test_data["user"] = test_data["user"].map(user_to_idx)
+        test_data["item"] = test_data["item"].map(item_to_idx)
 
         return train_data, val_data, test_data
 
     def _prepare_implicit_bpr(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        user_to_idx = {user: idx for idx, user in enumerate(self.data["user"].unique())}
-        item_to_idx = {item: idx for idx, item in enumerate(self.data["item"].unique())}
-        self.data["user"] = self.data["user"].map(user_to_idx)
-        self.data["item"] = self.data["item"].map(item_to_idx)
-
         self.data.loc[self.data["target"] < 4, "target"] = 0
         self.data.loc[self.data["target"] >= 4, "target"] = 1
 
-        train_data = self.data[:700_000].reset_index(drop=True)
+        # Split data into train/val/test
+        train_data = self.data[:900_000].reset_index(drop=True)
         tmp0 = train_data.loc[train_data["target"] == 0, ["user", "item"]]
         tmp1 = train_data.loc[train_data["target"] == 1, ["user", "item"]]
         train_data = tmp0.merge(tmp1, "inner", "user", suffixes=("_neg", "_pos"))
         train_data = train_data.sample(frac=0.05, random_state=0).reset_index(drop=True)
-        val_data = self.data[700_000:850_000].reset_index(drop=True)
-        test_data = self.data[850_000:].reset_index(drop=True)
+        val_data = self.data[900_000:950_000].reset_index(drop=True)
+        test_data = self.data[950_000:].reset_index(drop=True)
+
+        # Prepare unique train user and items
+        train_users = train_data["user"].unique()
+        item_neg_set = set(train_data["item_neg"])
+        item_pos_set = set(train_data["item_pos"])
+        train_items = pd.Series(list(item_neg_set | item_pos_set)).unique()
+
+        # Filter val/test data
+        val_data = val_data[val_data["user"].isin(train_users)]
+        val_data = val_data[val_data["item"].isin(train_items)]
+        val_data = val_data.reset_index(drop=True)
+        test_data = test_data[test_data["user"].isin(train_users)]
+        test_data = test_data[test_data["item"].isin(train_items)]
+        test_data = test_data.reset_index(drop=True)
+
+        # Map idx
+        user_to_idx = {user: idx for idx, user in enumerate(train_users)}
+        item_to_idx = {item: idx for idx, item in enumerate(train_items)}
+        train_data["user"] = train_data["user"].map(user_to_idx)
+        train_data["item_neg"] = train_data["item_neg"].map(item_to_idx)
+        train_data["item_pos"] = train_data["item_pos"].map(item_to_idx)
+        val_data["user"] = val_data["user"].map(user_to_idx)
+        val_data["item"] = val_data["item"].map(item_to_idx)
+        test_data["user"] = test_data["user"].map(user_to_idx)
+        test_data["item"] = test_data["item"].map(item_to_idx)
 
         return train_data, val_data, test_data
 
