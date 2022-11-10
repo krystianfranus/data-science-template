@@ -54,6 +54,7 @@ def main(config: DictConfig):
     net_params = {"n_users": 6010, "n_items": 3678}  # movielens
     # net_params = {"n_users": 5934, "n_items": 3653}  # movielens bpr
     # net_params = {"n_users": 27016, "n_items": 6395}  # contentwise
+    # net_params = {"n_users": 24936, "n_items": 6213}  # contentwise bpr
 
     net = hydra.utils.instantiate(config.net, **net_params)
     optimizer = hydra.utils.instantiate(config.optimizer)

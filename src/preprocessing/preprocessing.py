@@ -255,7 +255,6 @@ class ContentWise:
             "user_id",
             "series_id",
             "recommendation_id",
-            "vision_factor",
         ]
         self.data = self.data[columns]
 
@@ -278,25 +277,55 @@ class ContentWise:
         merged.loc[
             merged["series_id"] != merged["recommended_series_list"], "target"
         ] = 0
-        merged = merged[["user_id", "recommended_series_list", "target"]]
+        merged = merged[
+            ["user_id", "recommended_series_list", "target", "utc_ts_milliseconds"]
+        ]
         merged["target"] = merged["target"].astype(int)
-        merged.columns = ["user", "item", "target"]
+        merged.columns = ["user", "item", "target", "utc_ts_milliseconds"]
 
-        merged = merged.groupby(["user", "item"]).agg({"target": "sum"}).reset_index()
+        merged = (
+            merged.groupby(["user", "item"])
+            .agg({"target": "sum", "utc_ts_milliseconds": "max"})
+            .reset_index()
+        )
         merged.loc[merged["target"] > 0, "target"] = 1
 
-        user_to_idx = {user: idx for idx, user in enumerate(merged["user"].unique())}
-        item_to_idx = {item: idx for idx, item in enumerate(merged["item"].unique())}
-        merged["user"] = merged["user"].map(user_to_idx)
-        merged["item"] = merged["item"].map(item_to_idx)
+        merged = merged.sort_values("utc_ts_milliseconds").reset_index(drop=True)
+        merged = merged.drop(columns=["utc_ts_milliseconds"])
 
-        train_data = merged[:800_000].reset_index(drop=True)
+        # Split data into train/val/test
+        train_data = merged[:1_000_000].reset_index(drop=True)
         tmp0 = train_data.loc[train_data["target"] == 0, ["user", "item"]]
         tmp1 = train_data.loc[train_data["target"] == 1, ["user", "item"]]
         train_data = tmp0.merge(tmp1, "inner", "user", suffixes=("_neg", "_pos"))
         train_data = train_data.sample(frac=0.2, random_state=0).reset_index(drop=True)
-        val_data = merged[800_000:1_000_000].reset_index(drop=True)
-        test_data = merged[1_000_000:].reset_index(drop=True)
+        val_data = merged[1_000_000:1_100_000].reset_index(drop=True)
+        test_data = merged[1_100_000:].reset_index(drop=True)
+
+        # Prepare unique train user and items
+        train_users = train_data["user"].unique()
+        item_neg_set = set(train_data["item_neg"])
+        item_pos_set = set(train_data["item_pos"])
+        train_items = pd.Series(list(item_neg_set | item_pos_set)).unique()
+
+        # Filter val/test data
+        val_data = val_data[val_data["user"].isin(train_users)]
+        val_data = val_data[val_data["item"].isin(train_items)]
+        val_data = val_data.reset_index(drop=True)
+        test_data = test_data[test_data["user"].isin(train_users)]
+        test_data = test_data[test_data["item"].isin(train_items)]
+        test_data = test_data.reset_index(drop=True)
+
+        # Map idx
+        user_to_idx = {user: idx for idx, user in enumerate(train_users)}
+        item_to_idx = {item: idx for idx, item in enumerate(train_items)}
+        train_data["user"] = train_data["user"].map(user_to_idx)
+        train_data["item_neg"] = train_data["item_neg"].map(item_to_idx)
+        train_data["item_pos"] = train_data["item_pos"].map(item_to_idx)
+        val_data["user"] = val_data["user"].map(user_to_idx)
+        val_data["item"] = val_data["item"].map(item_to_idx)
+        test_data["user"] = test_data["user"].map(user_to_idx)
+        test_data["item"] = test_data["item"].map(item_to_idx)
 
         return train_data, val_data, test_data
 
