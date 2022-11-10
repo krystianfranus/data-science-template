@@ -53,7 +53,8 @@ def main(config: DictConfig):
     log.info("[My Logger] Instantiating model")
     net_params = {"n_users": 6010, "n_items": 3678}  # movielens
     # net_params = {"n_users": 5934, "n_items": 3653}  # movielens bpr
-    # net_params = {"n_users": 28597, "n_items": 6733}  # contentwise
+    # net_params = {"n_users": 27016, "n_items": 6395}  # contentwise
+
     net = hydra.utils.instantiate(config.net, **net_params)
     optimizer = hydra.utils.instantiate(config.optimizer)
     model = hydra.utils.instantiate(config.model, net=net, optimizer=optimizer)
