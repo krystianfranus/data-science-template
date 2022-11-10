@@ -298,7 +298,7 @@ class ContentWise:
         tmp0 = train_data.loc[train_data["target"] == 0, ["user", "item"]]
         tmp1 = train_data.loc[train_data["target"] == 1, ["user", "item"]]
         train_data = tmp0.merge(tmp1, "inner", "user", suffixes=("_neg", "_pos"))
-        # train_data = train_data.sample(frac=0.2, random_state=0).reset_index(drop=True)
+        # train_data = train_data.sample(frac=0.2, random_state=0).reset_index(drop=True)  # noqa
         val_data = merged[1_000_000:1_100_000].reset_index(drop=True)
         test_data = merged[1_100_000:].reset_index(drop=True)
 
