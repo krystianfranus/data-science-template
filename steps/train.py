@@ -19,6 +19,16 @@ def main(config: DictConfig):
         # train_data = f"{data_dir}/train_data_{config.data_type}.csv"  # Iterable
         # val_data = f"{data_dir}/val_data_{config.data_type}.csv"  # Iterable
         # test_data = f"{data_dir}/test_data_{config.data_type}.csv"  # Iterable
+
+        # data_dir = "data/contentwise"
+        # train_data = pl.read_parquet(
+        #     f"{data_dir}/train_data_{config.data_type}.parquet"
+        # )
+        # val_data = pl.read_parquet(f"{data_dir}/val_data_{config.data_type}.parquet")
+        # test_data = pl.read_parquet(f"{data_dir}/test_data_{config.data_type}.parquet")  # noqa
+        # train_data = train_data.to_pandas()
+        # val_data = val_data.to_pandas()
+        # test_data = test_data.to_pandas()
     else:
         task = Task.init(
             project_name="My project",
@@ -53,8 +63,8 @@ def main(config: DictConfig):
     log.info("[My Logger] Instantiating model")
     net_params = {"n_users": 6010, "n_items": 3678}  # movielens
     # net_params = {"n_users": 5934, "n_items": 3653}  # movielens bpr
-    # net_params = {"n_users": 27016, "n_items": 6395}  # contentwise
-    # net_params = {"n_users": 26021, "n_items": 6393}  # contentwise bpr
+    # net_params = {"n_users": 28450, "n_items": 6706}  # contentwise polars
+    # net_params = {"n_users": 28028, "n_items": 6706}  # contentwise bpr polars
 
     net = hydra.utils.instantiate(config.net, **net_params)
     optimizer = hydra.utils.instantiate(config.optimizer)
