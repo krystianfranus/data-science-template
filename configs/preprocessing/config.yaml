@@ -1,13 +1,14 @@
 defaults:
   - _self_
-  - data: movielens
-  - override hydra/hydra_logging: none
-  - override hydra/job_logging: stdout
+  - override hydra/job_logging: custom
 
 hydra:
   output_subdir: null
   run:
     dir: .
 
-execute_locally: true
+data_type: "implicit"
+
+clearml: false
+use_remote_storage: false
 draft_mode: false
