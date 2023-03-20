@@ -1,32 +1,47 @@
 import datetime as dt
+from pathlib import Path
 from typing import Tuple
 
+import numpy as np
 import pandas as pd
 import polars as pl
 
 
 class ContentWise:
-    def __init__(self, data_type, use_remote_storage):
-        if use_remote_storage:
-            prefix = "s3://kf-north-bucket/data-science-template/data/contentwise/CW10M"
-        else:
-            prefix = "data/contentwise/data/contentwise/CW10M"
-        interactions_path = f"{prefix}/interactions/*.parquet"
-        impressions_dl_path = f"{prefix}/impressions-direct-link/*.parquet"
+    def __init__(self, data_type, use_polars):
+        # # Reading data from s3 with polars is inappropriate!
+        # prefix = "s3://kf-north-bucket/data-science-template/data/contentwise/CW10M"
+        prefix = "data/contentwise/data/contentwise/CW10M"
 
-        self.interactions = pl.scan_parquet(interactions_path)
-        self.impressions_dl = pl.scan_parquet(impressions_dl_path)
         self.data_type = data_type
+        self.use_polars = use_polars
+        if use_polars:
+            interactions_path = f"{prefix}/interactions/*.parquet"
+            impressions_dl_path = f"{prefix}/impressions-direct-link/*.parquet"
+            self.interactions = pl.scan_parquet(interactions_path)
+            self.impressions_dl = pl.scan_parquet(impressions_dl_path)
+        else:
+            interactions_path = Path(prefix) / Path("interactions")
+            self.interactions = pd.concat(
+                pd.read_parquet(p) for p in interactions_path.glob("*.parquet")
+            ).reset_index()
+            impressions_dl_path = Path(prefix) / Path("impressions-direct-link")
+            self.impressions_dl = pd.concat(
+                pd.read_parquet(p) for p in impressions_dl_path.glob("*.parquet")
+            ).reset_index()
 
     def prepare_data(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         train_data, val_data, test_data = None, None, None
         if self.data_type == "implicit":
-            train_data, val_data, test_data = self._prepare_implicit()
+            if self.use_polars:
+                train_data, val_data, test_data = self._prepare_implicit_pl()
+            else:
+                train_data, val_data, test_data = self._prepare_implicit_pd()
         elif self.data_type == "implicit_bpr":
             train_data, val_data, test_data = self._prepare_implicit_bpr()
         return train_data, val_data, test_data
 
-    def _prepare_implicit(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    def _prepare_implicit_pl(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         # Select 'clicks' only from all interactions
         interactions = self.interactions.filter(pl.col("interaction_type") == 0)
 
@@ -106,6 +121,86 @@ class ContentWise:
         test_data = val_data  # test set == validation set (to change in the future!)
 
         return train_data.collect(), val_data.collect(), test_data.collect()
+
+    def _prepare_implicit_pd(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        # Select 'clicks' only from all interactions
+        interactions = self.interactions[
+            self.interactions["interaction_type"] == 0
+        ].reset_index(drop=True)
+
+        impressions_dl = self.impressions_dl.explode("recommended_series_list")
+        impressions_dl["recommended_series_list"] = pd.to_numeric(
+            impressions_dl["recommended_series_list"]
+        )
+
+        # Join indirectly positive actions with negative (impressions)
+        interactions = interactions.merge(impressions_dl, "inner", "recommendation_id")
+
+        # Mark positive interactions with 1 and negative with 0
+        interactions.loc[
+            interactions["series_id"] == interactions["recommended_series_list"],
+            "target",
+        ] = 1
+        interactions.loc[
+            interactions["series_id"] != interactions["recommended_series_list"],
+            "target",
+        ] = 0
+
+        interactions = interactions[
+            ["user_id", "recommended_series_list", "target", "utc_ts_milliseconds"]
+        ]
+        interactions.columns = ["user", "item", "target", "timestamp"]
+        interactions["target"] = interactions["target"].astype("int32")
+        interactions["timestamp"] = pd.to_datetime(interactions["timestamp"], unit="ms")
+
+        # Handle (user, item) duplicates
+        interactions = (
+            interactions.groupby(["user", "item"])
+            .agg({"target": "sum", "timestamp": "max"})
+            .reset_index()
+        )
+        interactions.loc[interactions["target"] > 0, "target"] = 1
+
+        interactions = interactions.sort_values("timestamp").reset_index(drop=True)
+
+        # Split data
+        train_data = interactions[
+            interactions["timestamp"] < dt.datetime(2019, 4, 14)
+        ].reset_index(drop=True)
+        val_data = interactions[
+            interactions["timestamp"] >= dt.datetime(2019, 4, 14)
+        ].reset_index(drop=True)
+
+        # Prepare user/item to idx mappers based on train data
+        unique_users = np.sort(train_data["user"].unique())
+        unique_items = np.sort(train_data["item"].unique())
+        train_user_to_idx = pd.DataFrame(
+            {"user": unique_users, "user_idx": np.arange(unique_users.size)}
+        )
+        train_item_to_idx = pd.DataFrame(
+            {"item": unique_items, "item_idx": np.arange(unique_items.size)}
+        )
+
+        # Map user/item to idx
+        train_data = train_data.merge(train_user_to_idx, on="user", how="inner")
+        train_data = train_data.merge(train_item_to_idx, on="item", how="inner")
+        val_data = val_data.merge(train_user_to_idx, on="user", how="inner")
+        val_data = val_data.merge(train_item_to_idx, on="item", how="inner")
+
+        train_data = train_data.sort_values("timestamp").reset_index(drop=True)
+        val_data = val_data.sort_values("timestamp").reset_index(drop=True)
+
+        # Select valid columns
+        train_data = train_data[["user_idx", "item_idx", "target"]]
+        train_data.columns = ["user", "item", "target"]
+        val_data = val_data[["user_idx", "item_idx", "target"]]
+        val_data.columns = ["user", "item", "target"]
+
+        test_data = (
+            val_data.copy()
+        )  # test set == validation set (to change in the future!)
+
+        return train_data, val_data, test_data
 
     def _prepare_implicit_bpr(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         # Select 'clicks' only from all interactions
@@ -201,8 +296,23 @@ class ContentWise:
         return train_data.collect(), val_data.collect(), test_data.collect()
 
     def save_data(self, train_data, val_data, test_data):
-        train_data.write_parquet(
-            f"data/contentwise/train_data_{self.data_type}.parquet"
-        )
-        val_data.write_parquet(f"data/contentwise/val_data_{self.data_type}.parquet")
-        test_data.write_parquet(f"data/contentwise/test_data_{self.data_type}.parquet")
+        if self.use_polars:
+            train_data.write_parquet(
+                f"data/contentwise/train_data_{self.data_type}.parquet"
+            )
+            val_data.write_parquet(
+                f"data/contentwise/val_data_{self.data_type}.parquet"
+            )
+            test_data.write_parquet(
+                f"data/contentwise/test_data_{self.data_type}.parquet"
+            )
+        else:
+            train_data.to_parquet(
+                f"data/contentwise/train_data_{self.data_type}.parquet", index=False
+            )
+            val_data.to_parquet(
+                f"data/contentwise/val_data_{self.data_type}.parquet", index=False
+            )
+            test_data.to_parquet(
+                f"data/contentwise/test_data_{self.data_type}.parquet", index=False
+            )
