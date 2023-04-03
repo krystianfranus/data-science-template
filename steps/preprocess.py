@@ -10,10 +10,11 @@ log = logging.getLogger(__name__)
 
 
 @hydra.main(
-    version_base=None, config_path="../configs/preprocessing/", config_name="config"
+    config_path="../configs/preprocessing/",
+    config_name="config",
+    version_base=None,
 )
 def main(cfg: DictConfig):
-
     if cfg.clearml:
         output_uri = None
         if cfg.use_remote_storage:
