@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 import hydra
 import pandas as pd
@@ -8,83 +9,79 @@ from omegaconf import DictConfig
 log = logging.getLogger(__name__)
 
 
-@hydra.main(version_base=None, config_path="../configs/training/", config_name="config")
-def main(config: DictConfig):
-    if config.execute_locally:
-        log.info("[My Logger] Loading data (artifacts)")
-        data_dir = "data/movielens"
-        train_data = pd.read_csv(f"{data_dir}/train_data_{config.data_type}.csv")
-        val_data = pd.read_csv(f"{data_dir}/val_data_{config.data_type}.csv")
-        test_data = pd.read_csv(f"{data_dir}/test_data_{config.data_type}.csv")
-        # train_data = f"{data_dir}/train_data_{config.data_type}.csv"  # Iterable
-        # val_data = f"{data_dir}/val_data_{config.data_type}.csv"  # Iterable
-        # test_data = f"{data_dir}/test_data_{config.data_type}.csv"  # Iterable
-
-        # data_dir = "data/contentwise"
-        # train_data = pl.read_parquet(
-        #     f"{data_dir}/train_data_{config.data_type}.parquet"
-        # )
-        # val_data = pl.read_parquet(f"{data_dir}/val_data_{config.data_type}.parquet")
-        # test_data = pl.read_parquet(f"{data_dir}/test_data_{config.data_type}.parquet")  # noqa
-        # train_data = train_data.to_pandas()
-        # val_data = val_data.to_pandas()
-        # test_data = test_data.to_pandas()
+@hydra.main(
+    config_path="../configs/training/",
+    config_name="config",
+    version_base=None,
+)
+def main(cfg: DictConfig):
+    if cfg.use_remote_storage:
+        output_uri = "s3://kf-north-bucket/data-science-template/output/"
     else:
+        output_uri = None
+
+    log.info("Data loading")
+    if cfg.clearml:
         task = Task.init(
-            project_name="My project",
+            project_name="MyProject",
             task_name="Training",
             task_type=TaskTypes.training,
-            output_uri="s3://kfranus-bucket/data-science-template/output/",
+            output_uri=output_uri,
         )
 
-        if config.prev_task_id is not None:
-            task_prev = Task.get_task(task_id=config.prev_task_id)
+        if cfg.prev_task_id is not None:
+            task_prev = Task.get_task(task_id=cfg.prev_task_id)
         else:
             task_prev = Task.get_task(
-                project_name="My project", task_name="Preprocessing"
+                project_name="MyProject", task_name="Preprocessing"
             )
 
-        log.info("[My Logger] Loading data (artifacts)")
         train_data = task_prev.artifacts["train_data"].get()
         val_data = task_prev.artifacts["val_data"].get()
         test_data = task_prev.artifacts["test_data"].get()
 
-        if config.draft_mode:
+        if cfg.draft_mode:
             task.execute_remotely()
+    else:
+        prefix = Path("data/contentwise/")
+        train_data_path = prefix / Path(f"train_data_{cfg.data_type}.parquet")
+        val_data_path = prefix / Path(f"val_data_{cfg.data_type}.parquet")
+        test_data_path = prefix / Path(f"test_data_{cfg.data_type}.parquet")
+        train_data = pd.read_parquet(train_data_path)
+        val_data = pd.read_parquet(val_data_path)
+        test_data = pd.read_parquet(test_data_path)
 
-    log.info("[My Logger] Instantiating datamodule")
+    log.info("Datamodule Instantiating")
     datamodule_params = {
         "train_data": train_data,
         "val_data": val_data,
         "test_data": test_data,
     }
-    datamodule = hydra.utils.instantiate(config.datamodule, **datamodule_params)
+    datamodule = hydra.utils.instantiate(cfg.datamodule, **datamodule_params)
 
-    log.info("[My Logger] Instantiating model")
-    net_params = {"n_users": 6010, "n_items": 3678}  # movielens
-    # net_params = {"n_users": 5934, "n_items": 3653}  # movielens bpr
-    # net_params = {"n_users": 28450, "n_items": 6706}  # contentwise polars
+    log.info("Model instantiating")
+    net_params = {"n_users": 28450, "n_items": 6706}  # contentwise polars
     # net_params = {"n_users": 28028, "n_items": 6706}  # contentwise bpr polars
 
-    net = hydra.utils.instantiate(config.net, **net_params)
-    optimizer = hydra.utils.instantiate(config.optimizer)
-    model = hydra.utils.instantiate(config.model, net=net, optimizer=optimizer)
+    net = hydra.utils.instantiate(cfg.net, **net_params)
+    optimizer = hydra.utils.instantiate(cfg.optimizer)
+    model = hydra.utils.instantiate(cfg.model, net=net, optimizer=optimizer)
 
-    log.info("[My Logger] Instantiating callbacks")
+    log.info("Callbacks instantiating")
     callbacks = []
-    for _, cb_cfg in config.callbacks.items():
+    for _, cb_cfg in cfg.callbacks.items():
         if isinstance(cb_cfg, DictConfig) and "_target_" in cb_cfg:
             callbacks.append(hydra.utils.instantiate(cb_cfg))
 
-    log.info("[My Logger] Instantiating trainer")
-    trainer = hydra.utils.instantiate(config.trainer, callbacks=callbacks)
+    log.info("Trainer instantiating ")
+    trainer = hydra.utils.instantiate(cfg.trainer, callbacks=callbacks)
 
-    log.info("[My Logger] Training")
+    log.info("Training")
     trainer.fit(model=model, datamodule=datamodule)
     # log.info("[My Logger] Testing")
     # trainer.test(model=model, datamodule=datamodule)
 
-    log.info("[My Logger] Done!")
+    log.info("Done!")
 
 
 if __name__ == "__main__":

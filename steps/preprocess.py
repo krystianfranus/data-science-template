@@ -34,13 +34,15 @@ def main(cfg: DictConfig):
     log.info("Data parsing")
     train_data, val_data, test_data = data.prepare_data()
 
-    log.info("Data (artifacts) saving")
+    log.info("Data saving")
     if cfg.clearml:
         task.upload_artifact("train_data", train_data, extension_name=".parquet")
         task.upload_artifact("val_data", val_data, extension_name=".parquet")
         task.upload_artifact("test_data", test_data, extension_name=".parquet")
     else:
         data.save_data(train_data, val_data, test_data)
+
+    log.info("Done!")
 
 
 if __name__ == "__main__":

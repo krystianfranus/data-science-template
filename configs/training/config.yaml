@@ -1,23 +1,23 @@
 defaults:
   - _self_
   - datamodule: simple
-  - net: mf
-  - optimizer: sgd
-  - model: reg
+  - net: mlp
+  - optimizer: adam
+  - model: cla
   - callbacks: default
   - trainer: default
 
   - experiment: null
 
-  - override hydra/hydra_logging: none
-  - override hydra/job_logging: stdout
+  - override hydra/job_logging: custom
 
 hydra:
   output_subdir: null
   run:
     dir: .
 
-data_type: "explicit"
-execute_locally: true
+data_type: "implicit"
+clearml: false
+use_remote_storage: false
 draft_mode: false
 prev_task_id: null
