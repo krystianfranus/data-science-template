@@ -1,8 +1,8 @@
 # --------------- core --------------- #
-numpy==1.23.4  # Some kind of problems with upgrading numpy
-pandas==1.5.2
-polars==0.15.7
-pyarrow==10.0.1
+numpy==1.24.2
+pandas==2.0.0
+polars==0.16.18
+pyarrow==11.0.0
 hydra-core==1.2.0
 torch==1.13.0
 pytorch-lightning==1.8.0
@@ -12,7 +12,6 @@ clearml-agent==1.4.1
 # -------------- extras -------------- #
 notebook==6.5.2
 matplotlib==3.6.2
-pandas-profiling[notebook]==3.5.0
 jupyter_nbextensions_configurator==0.6.1
 rich==12.6.0
 s3fs==0.4.2

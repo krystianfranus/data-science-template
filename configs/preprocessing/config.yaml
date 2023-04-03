@@ -11,5 +11,4 @@ data_type: "implicit"
 
 clearml: false
 use_remote_storage: false
-use_polars: false
 draft_mode: false
