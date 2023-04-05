@@ -1,8 +1,9 @@
 from typing import Any, List
 
-import pytorch_lightning as pl
+import lightning.pytorch as pl
 import torch
-from torchmetrics import MeanSquaredError, RetrievalNormalizedDCG
+from torchmetrics.regression import MeanSquaredError
+from torchmetrics.retrieval import RetrievalNormalizedDCG
 
 
 class RegressionTask(pl.LightningModule):
@@ -32,6 +33,7 @@ class RegressionTask(pl.LightningModule):
         return loss, targets, targets_pred, users
 
     # def training_step(self, batch: Any, batch_idx: int, optimizer_idx: int):
+    # https://github.com/Lightning-AI/lightning/pull/16539
     def training_step(self, batch: Any, batch_idx: int):
         loss, targets, targets_pred, _ = self.step(batch)
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
@@ -79,42 +81,38 @@ class ClassificationTask(pl.LightningModule):
     ):
         super().__init__()
         self.save_hyperparameters(logger=False, ignore=["net"])
-
         self.net = net
         self.criterion = torch.nn.BCEWithLogitsLoss()
-
         self.val_ndcg = RetrievalNormalizedDCG()
+        self.val_step_outputs = []
 
     def forward(self, users: torch.Tensor, items: torch.Tensor):
         return self.net(users, items)
 
     def step(self, batch: Any):
-        users, items, targets = batch
+        users, items, targets_true = batch
         targets_pred = self.forward(users, items)
-        loss = self.criterion(targets_pred, targets)
-        return loss, targets, targets_pred, users
+        loss = self.criterion(targets_pred, targets_true)
+        return loss, targets_true, targets_pred, users
 
     def training_step(self, batch: Any, batch_idx: int):
-        loss, _, _, _ = self.step(batch)
+        loss, *_ = self.step(batch)
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-        return {"loss": loss}
+        return loss
 
     def validation_step(self, batch: Any, batch_idx: int):
-        loss, targets, targets_pred, users = self.step(batch)
+        loss, targets_true, targets_pred, users = self.step(batch)
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-        return {
-            "loss": loss,
-            "targets": targets,
-            "targets_pred": targets_pred,
-            "users": users,
-        }
+        self.val_step_outputs.append((targets_pred, targets_true, users))
 
-    def validation_epoch_end(self, outputs: List[Any]):
-        targets_pred = torch.cat(([o["targets_pred"] for o in outputs]))
-        targets = torch.cat(([o["targets"] for o in outputs]))
-        indexes = torch.cat(([o["users"] for o in outputs]))
-        self.val_ndcg(targets_pred, targets, indexes=indexes)
+    def on_validation_epoch_end(self):
+        # https://github.com/Lightning-AI/lightning/pull/16520
+        targets_pred = torch.cat([tp for tp, *_ in self.val_step_outputs])
+        targets_true = torch.cat([tt for _, tt, _ in self.val_step_outputs])
+        indexes = torch.cat([u for *_, u in self.val_step_outputs])
+        self.val_ndcg(targets_pred, targets_true, indexes=indexes)
         self.log("val/ndcg", self.val_ndcg, prog_bar=True)
+        self.val_step_outputs.clear()
 
     def configure_optimizers(self):
         optimizer = self.hparams.optimizer(params=self.parameters())

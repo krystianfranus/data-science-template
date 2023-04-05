@@ -15,10 +15,7 @@ class TrainDataset(Dataset):
         return len(self.users)
 
     def __getitem__(self, idx):
-        user = self.users[idx]
-        item = self.items[idx]
-        target = self.targets[idx]
-        return user, item, target
+        return self.users[idx], self.items[idx], self.targets[idx]
 
 
 class CustomIterableDataset(IterableDataset):
@@ -66,7 +63,4 @@ class BPRDataset(Dataset):
         return len(self.users)
 
     def __getitem__(self, idx):
-        user = self.users[idx]
-        item_neg = self.items_neg[idx]
-        item_pos = self.items_pos[idx]
-        return user, item_neg, item_pos
+        return self.users[idx], self.items_neg[idx], self.items_pos[idx]

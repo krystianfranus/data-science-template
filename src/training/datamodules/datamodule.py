@@ -1,7 +1,7 @@
 from typing import Optional
 
+import lightning.pytorch as pl
 import pandas as pd
-from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset
 
 from src.training.datamodules.dataset import BPRDataset, TrainDataset
@@ -9,7 +9,7 @@ from src.training.datamodules.dataset import BPRDataset, TrainDataset
 # from src.training.datamodules.dataset import CustomIterableDataset
 
 
-class SimpleDataModule(LightningDataModule):
+class SimpleDataModule(pl.LightningDataModule):
     def __init__(
         self,
         train_data: pd.DataFrame,
@@ -21,25 +21,20 @@ class SimpleDataModule(LightningDataModule):
     ):
         super().__init__()
         self.save_hyperparameters(logger=False)
-
-        self.train_data = train_data
-        self.val_data = val_data
-        self.test_data = test_data
-
         self.train_dataset: Optional[Dataset] = None
         self.val_dataset: Optional[Dataset] = None
         self.test_dataset: Optional[Dataset] = None
 
     def setup(self, stage: Optional[str] = None):
         if stage == "fit":
-            self.train_dataset = TrainDataset(self.train_data)
-            self.val_dataset = TrainDataset(self.val_data)
-            # self.train_dataset = CustomIterableDataset(self.train_data)
-            # self.val_dataset = CustomIterableDataset(self.val_data)
+            self.train_dataset = TrainDataset(self.hparams.train_data)
+            self.val_dataset = TrainDataset(self.hparams.val_data)
+            # self.train_dataset = CustomIterableDataset(self.hparams.train_data)
+            # self.val_dataset = CustomIterableDataset(self.hparams.val_data)
 
         if stage == "test":
-            self.test_dataset = TrainDataset(self.test_data)
-            # self.test_dataset = CustomIterableDataset(self.test_data)
+            self.test_dataset = TrainDataset(self.hparams.test_data)
+            # self.test_dataset = CustomIterableDataset(self.hparams.test_data)
 
     def train_dataloader(self):
         return DataLoader(
@@ -69,7 +64,7 @@ class SimpleDataModule(LightningDataModule):
         )
 
 
-class BPRDataModule(LightningDataModule):
+class BPRDataModule(pl.LightningDataModule):
     def __init__(
         self,
         train_data: pd.DataFrame,
@@ -81,22 +76,17 @@ class BPRDataModule(LightningDataModule):
     ):
         super().__init__()
         self.save_hyperparameters(logger=False)
-
-        self.train_data = train_data
-        self.val_data = val_data
-        self.test_data = test_data
-
         self.train_dataset: Optional[Dataset] = None
         self.val_dataset: Optional[Dataset] = None
         self.test_dataset: Optional[Dataset] = None
 
     def setup(self, stage: Optional[str] = None):
         if stage == "fit":
-            self.train_dataset = BPRDataset(self.train_data)
-            self.val_dataset = TrainDataset(self.val_data)
+            self.train_dataset = BPRDataset(self.hparams.train_data)
+            self.val_dataset = TrainDataset(self.hparams.val_data)
 
         if stage == "test":
-            self.test_dataset = TrainDataset(self.test_data)
+            self.test_dataset = TrainDataset(self.hparams.test_data)
 
     def train_dataloader(self):
         return DataLoader(

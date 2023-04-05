@@ -73,7 +73,7 @@ def main(cfg: DictConfig):
         if isinstance(cb_cfg, DictConfig) and "_target_" in cb_cfg:
             callbacks.append(hydra.utils.instantiate(cb_cfg))
 
-    log.info("Trainer instantiating ")
+    log.info("Trainer instantiating")
     trainer = hydra.utils.instantiate(cfg.trainer, callbacks=callbacks)
 
     log.info("Training")
