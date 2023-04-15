@@ -2,22 +2,23 @@ from clearml.automation import PipelineController
 
 
 def main():
-    pipe = PipelineController(name="My Pipeline", project="My project", version="0.0.1")
+    pipe = PipelineController(name="MyPipeline", project="MyProject", version="0.0.1")
 
     pipe.add_step(
         name="Preprocessing",
-        base_task_project="My project",
+        base_task_project="MyProject",
         base_task_name="Preprocessing",
         cache_executed_step=True,
     )
 
     pipe.add_step(
         name="Training",
-        base_task_project="My project",
+        base_task_project="MyProject",
         base_task_name="Training",
         cache_executed_step=True,
         parents=["Preprocessing"],
-        parameter_override={"Args/overrides": "['prev_task_id=${Preprocessing.id}']"},
+        parameter_override={"Hydra/prev_task_id": "${Preprocessing.id}"},  # It is preferable
+        # parameter_override={"Args/overrides": "['prev_task_id=${Preprocessing.id}']"},  # It also works
     )
 
     # pipe.add_step(

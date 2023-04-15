@@ -85,6 +85,7 @@ class ClassificationTask(pl.LightningModule):
         self.criterion = torch.nn.BCEWithLogitsLoss()
         self.val_ndcg = RetrievalNormalizedDCG()
         self.val_step_outputs = []
+        self.automatic_optimization = False
 
     def forward(self, users: torch.Tensor, items: torch.Tensor):
         return self.net(users, items)
@@ -96,8 +97,17 @@ class ClassificationTask(pl.LightningModule):
         return loss, targets_true, targets_pred, users
 
     def training_step(self, batch: Any, batch_idx: int):
+        opt1, opt2 = self.optimizers()
+        opt1.zero_grad()
+        opt2.zero_grad()
         loss, *_ = self.step(batch)
+        self.manual_backward(loss)
+        opt1.step()
+        opt2.step()
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        if batch_idx == 0:
+            self.logger.experiment.add_histogram("embed_user", self.net.embed_user.weight, self.current_epoch, bins="fd")
+            self.logger.experiment.add_histogram("embed_item", self.net.embed_item.weight, self.current_epoch, bins="fd")
         return loss
 
     def validation_step(self, batch: Any, batch_idx: int):
@@ -115,8 +125,12 @@ class ClassificationTask(pl.LightningModule):
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):
-        optimizer = self.hparams.optimizer(params=self.parameters())
-        return optimizer
+        # optimizer = self.hparams.optimizer(params=self.parameters())
+        # return optimizer
+        optimizer1 = torch.optim.SparseAdam(list(self.parameters())[:2], lr=1e-3)
+        optimizer2 = torch.optim.Adam(list(self.parameters())[2:],
+                                      lr=1e-3, weight_decay=1e-2)
+        return optimizer1, optimizer2
 
 
 def bpr_loss(positive_sim: torch.Tensor, negative_sim: torch.Tensor) -> torch.Tensor:

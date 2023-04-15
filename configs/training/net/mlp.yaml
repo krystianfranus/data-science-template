@@ -4,4 +4,4 @@ n_items: ???
 n_factors: 15
 n_layers: 3
 dropout: 0.5
-sparse: false
+sparse: true
