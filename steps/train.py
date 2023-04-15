@@ -26,6 +26,7 @@ def main(cfg: DictConfig):
             project_name="MyProject",
             task_name="Training",
             task_type=TaskTypes.training,
+            reuse_last_task_id=False,
             output_uri=output_uri,
         )
 
@@ -64,8 +65,7 @@ def main(cfg: DictConfig):
     # net_params = {"n_users": 28028, "n_items": 6706}  # contentwise bpr polars
 
     net = hydra.utils.instantiate(cfg.net, **net_params)
-    optimizer = hydra.utils.instantiate(cfg.optimizer)
-    model = hydra.utils.instantiate(cfg.model, net=net, optimizer=optimizer)
+    model = hydra.utils.instantiate(cfg.model, net=net)
 
     log.info("Callbacks instantiating")
     callbacks = []

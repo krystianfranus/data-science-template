@@ -3,10 +3,9 @@
 defaults:
   - override /datamodule: simple
   - override /net: mlp  # mf
-  - override /optimizer: adam
-  - override /model: cla
+  - override /model: cla_mlp  # cla_mf
 
-data_type: implicit
+data_type: "implicit"
 
 datamodule:
   num_workers: 6

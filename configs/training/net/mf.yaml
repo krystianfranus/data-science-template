@@ -2,4 +2,3 @@ _target_: src.training.models.net.MF
 n_users: ???
 n_items: ???
 embed_size: 24
-sparse: false

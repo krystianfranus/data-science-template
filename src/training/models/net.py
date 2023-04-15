@@ -8,11 +8,10 @@ class MF(nn.Module):
         n_users: int,
         n_items: int,
         embed_size: int,
-        sparse: bool,
     ):
         super().__init__()
-        self.embed_user = nn.Embedding(n_users, embed_size, sparse=sparse)
-        self.embed_item = nn.Embedding(n_items, embed_size, sparse=sparse)
+        self.embed_user = nn.Embedding(n_users, embed_size, sparse=True)
+        self.embed_item = nn.Embedding(n_items, embed_size, sparse=True)
         self._init_weights()
 
     def _init_weights(self):
@@ -34,13 +33,12 @@ class MLP(nn.Module):
         n_factors: int,
         n_layers: int,
         dropout: float,
-        sparse: bool,
     ):
         super().__init__()
 
         embed_size = n_factors * (2 ** (n_layers - 1))
-        self.embed_user = nn.Embedding(n_users, embed_size, sparse=sparse)
-        self.embed_item = nn.Embedding(n_items, embed_size, sparse=sparse)
+        self.embed_user = nn.Embedding(n_users, embed_size, sparse=True)
+        self.embed_item = nn.Embedding(n_items, embed_size, sparse=True)
 
         mlp_modules = []
         for i in range(n_layers):

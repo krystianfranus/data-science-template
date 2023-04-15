@@ -3,10 +3,9 @@
 defaults:
   - override /datamodule: simple
   - override /net: mlp  # mf
-  - override /optimizer: adam
   - override /model: reg
 
-data_type: explicit
+data_type: "explicit"
 
 datamodule:
   num_workers: 6

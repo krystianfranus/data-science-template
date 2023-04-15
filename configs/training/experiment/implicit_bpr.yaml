@@ -3,10 +3,9 @@
 defaults:
   - override /datamodule: bpr
   - override /net: mlp  # mf
-  - override /optimizer: adam
   - override /model: bpr
 
-data_type: implicit_bpr
+data_type: "implicit_bpr"
 
 datamodule:
   num_workers: 6

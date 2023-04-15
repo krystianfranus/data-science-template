@@ -73,11 +73,62 @@ class RegressionTask(pl.LightningModule):
         # return optimizer1, optimizer2
 
 
-class ClassificationTask(pl.LightningModule):
+class ClassificationMFTask(pl.LightningModule):
     def __init__(
         self,
         net: torch.nn.Module,
-        optimizer: torch.optim.Optimizer,
+        lr: float,
+    ):
+        super().__init__()
+        self.save_hyperparameters(logger=False, ignore=["net"])
+        self.net = net
+        self.optimizer = torch.optim.SparseAdam
+        self.criterion = torch.nn.BCEWithLogitsLoss()
+        self.val_ndcg = RetrievalNormalizedDCG()
+        self.val_step_outputs = []
+
+    def forward(self, users: torch.Tensor, items: torch.Tensor):
+        return self.net(users, items)
+
+    def step(self, batch: Any):
+        users, items, targets_true = batch
+        targets_pred = self.forward(users, items)
+        loss = self.criterion(targets_pred, targets_true)
+        return loss, targets_true, targets_pred, users
+
+    def training_step(self, batch: Any, batch_idx: int):
+        loss, *_ = self.step(batch)
+        self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        if batch_idx == 0:
+            self.logger.experiment.add_histogram("embed_user", self.net.embed_user.weight, self.current_epoch, bins="fd")
+            self.logger.experiment.add_histogram("embed_item", self.net.embed_item.weight, self.current_epoch, bins="fd")
+        return loss
+
+    def validation_step(self, batch: Any, batch_idx: int):
+        loss, targets_true, targets_pred, users = self.step(batch)
+        self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.val_step_outputs.append((targets_pred, targets_true, users))
+
+    def on_validation_epoch_end(self):
+        # https://github.com/Lightning-AI/lightning/pull/16520
+        targets_pred = torch.cat([tp for tp, *_ in self.val_step_outputs])
+        targets_true = torch.cat([tt for _, tt, _ in self.val_step_outputs])
+        indexes = torch.cat([u for *_, u in self.val_step_outputs])
+        self.val_ndcg(targets_pred, targets_true, indexes=indexes)
+        self.log("val/ndcg", self.val_ndcg, prog_bar=True)
+        self.val_step_outputs.clear()
+
+    def configure_optimizers(self):
+        optimizer = self.optimizer(params=self.parameters(), lr=self.hparams.lr)
+        return optimizer
+
+
+class ClassificationMLPTask(pl.LightningModule):
+    def __init__(
+        self,
+        net: torch.nn.Module,
+        lr: float,
+        weight_decay: float,
     ):
         super().__init__()
         self.save_hyperparameters(logger=False, ignore=["net"])
@@ -125,11 +176,9 @@ class ClassificationTask(pl.LightningModule):
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):
-        # optimizer = self.hparams.optimizer(params=self.parameters())
-        # return optimizer
-        optimizer1 = torch.optim.SparseAdam(list(self.parameters())[:2], lr=1e-3)
+        optimizer1 = torch.optim.SparseAdam(list(self.parameters())[:2], lr=self.hparams.lr)
         optimizer2 = torch.optim.Adam(list(self.parameters())[2:],
-                                      lr=1e-3, weight_decay=1e-2)
+                                      lr=self.hparams.lr, weight_decay=self.hparams.weight_decay)
         return optimizer1, optimizer2
 
 

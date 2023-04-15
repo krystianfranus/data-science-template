@@ -2,8 +2,7 @@ defaults:
   - _self_
   - datamodule: simple
   - net: mlp
-  - optimizer: adam
-  - model: cla
+  - model: cla_mlp
   - callbacks: default
   - trainer: default
 
