@@ -17,8 +17,12 @@ def main():
         base_task_name="Training",
         cache_executed_step=True,
         parents=["Preprocessing"],
-        parameter_override={"Hydra/prev_task_id": "${Preprocessing.id}"},  # It is preferable
-        # parameter_override={"Args/overrides": "['prev_task_id=${Preprocessing.id}']"},  # It also works
+        parameter_override={
+            "Hydra/prev_task_id": "${Preprocessing.id}"
+        },  # It is preferable
+        # parameter_override={
+        #     "Args/overrides": "['prev_task_id=${Preprocessing.id}']"
+        # },  # It also works
     )
 
     # pipe.add_step(

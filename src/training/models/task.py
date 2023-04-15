@@ -100,8 +100,12 @@ class ClassificationMFTask(pl.LightningModule):
         loss, *_ = self.step(batch)
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         if batch_idx == 0:
-            self.logger.experiment.add_histogram("embed_user", self.net.embed_user.weight, self.current_epoch, bins="fd")
-            self.logger.experiment.add_histogram("embed_item", self.net.embed_item.weight, self.current_epoch, bins="fd")
+            self.logger.experiment.add_histogram(
+                "embed_user", self.net.embed_user.weight, self.current_epoch, bins="fd"
+            )
+            self.logger.experiment.add_histogram(
+                "embed_item", self.net.embed_item.weight, self.current_epoch, bins="fd"
+            )
         return loss
 
     def validation_step(self, batch: Any, batch_idx: int):
@@ -157,8 +161,12 @@ class ClassificationMLPTask(pl.LightningModule):
         opt2.step()
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         if batch_idx == 0:
-            self.logger.experiment.add_histogram("embed_user", self.net.embed_user.weight, self.current_epoch, bins="fd")
-            self.logger.experiment.add_histogram("embed_item", self.net.embed_item.weight, self.current_epoch, bins="fd")
+            self.logger.experiment.add_histogram(
+                "embed_user", self.net.embed_user.weight, self.current_epoch, bins="fd"
+            )
+            self.logger.experiment.add_histogram(
+                "embed_item", self.net.embed_item.weight, self.current_epoch, bins="fd"
+            )
         return loss
 
     def validation_step(self, batch: Any, batch_idx: int):
@@ -176,9 +184,14 @@ class ClassificationMLPTask(pl.LightningModule):
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):
-        optimizer1 = torch.optim.SparseAdam(list(self.parameters())[:2], lr=self.hparams.lr)
-        optimizer2 = torch.optim.Adam(list(self.parameters())[2:],
-                                      lr=self.hparams.lr, weight_decay=self.hparams.weight_decay)
+        optimizer1 = torch.optim.SparseAdam(
+            list(self.parameters())[:2], lr=self.hparams.lr
+        )
+        optimizer2 = torch.optim.Adam(
+            list(self.parameters())[2:],
+            lr=self.hparams.lr,
+            weight_decay=self.hparams.weight_decay,
+        )
         return optimizer1, optimizer2
 
 
