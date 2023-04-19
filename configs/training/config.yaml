@@ -1,8 +1,8 @@
 defaults:
   - _self_
   - datamodule: simple
-  - net: mlp
   - model: cla_mlp
+  - net: mlp
   - callbacks: default
   - trainer: default
 

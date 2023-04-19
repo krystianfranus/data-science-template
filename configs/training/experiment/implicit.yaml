@@ -2,10 +2,11 @@
 
 defaults:
   - override /datamodule: simple
-  - override /net: mlp  # mf
   - override /model: cla_mlp  # cla_mf
+  - override /net: mlp  # mf
 
 data_type: "implicit"
+clearml: true
 
 datamodule:
   num_workers: 6

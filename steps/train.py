@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-
 import hydra
 import pandas as pd
 from clearml import Task, TaskTypes
@@ -61,9 +60,10 @@ def main(cfg: DictConfig):
     datamodule = hydra.utils.instantiate(cfg.datamodule, **datamodule_params)
 
     log.info("Model instantiating")
-    net_params = {"n_users": 28450, "n_items": 6706}  # contentwise polars
-    # net_params = {"n_users": 28028, "n_items": 6706}  # contentwise bpr polars
-
+    n_users = train_data["user"].nunique()
+    n_items = train_data["item"].nunique()
+    net_params = {"n_users": n_users, "n_items": n_items}  # contentwise
+    # net_params = {"n_users": 28028, "n_items": 6706}  # contentwise bpr
     net = hydra.utils.instantiate(cfg.net, **net_params)
     model = hydra.utils.instantiate(cfg.model, net=net)
 
