@@ -193,97 +193,80 @@ class ContentWise:
         return train_data, val_data, test_data
 
     def _prepare_implicit_bpr(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        # Select 'clicks' only from all interactions
-        interactions = self.interactions.filter(pl.col("interaction_type") == 0)
+        interactions = self.interactions[
+            self.interactions["interaction_type"] == 0
+        ].reset_index(drop=True)
 
         impressions_dl = self.impressions_dl.explode("recommended_series_list")
+        impressions_dl["recommended_series_list"] = pd.to_numeric(
+            impressions_dl["recommended_series_list"]
+        )
 
         # Join indirectly positive actions with negative (impressions)
-        interactions = interactions.join(
-            impressions_dl, on="recommendation_id", how="inner"
-        )
+        interactions = interactions.merge(impressions_dl, "inner", "recommendation_id")
 
         # Mark positive interactions with 1 and negative with 0
-        interactions = interactions.with_column(
-            pl.when(pl.col("series_id") == pl.col("recommended_series_list"))
-            .then(1)
-            .otherwise(0)
-            .alias("target")
-        )
-        interactions = interactions.rename(
-            {
-                "user_id": "user",
-                "recommended_series_list": "item",
-                "utc_ts_milliseconds": "timestamp",
-            }
-        )
-        interactions = interactions.with_column(
-            pl.col("timestamp").cast(pl.Datetime).dt.with_time_unit("ms")
-        )
+        interactions.loc[
+            interactions["series_id"] == interactions["recommended_series_list"],
+            "target",
+        ] = 1
+        interactions.loc[
+            interactions["series_id"] != interactions["recommended_series_list"],
+            "target",
+        ] = 0
+
+        interactions = interactions[
+            ["user_id", "recommended_series_list", "target", "utc_ts_milliseconds"]
+        ]
+        interactions.columns = ["user", "item", "target", "timestamp"]
+        interactions["target"] = interactions["target"].astype("int32")
+        interactions["timestamp"] = pd.to_datetime(interactions["timestamp"], unit="ms")
+
         # Handle (user, item) duplicates
-        interactions = interactions.groupby(["user", "item"]).agg(
-            [pl.sum("target"), pl.max("timestamp")]
+        interactions = (
+            interactions.groupby(["user", "item"])
+            .agg({"target": "sum", "timestamp": "max"})
+            .reset_index()
         )
-        interactions = interactions.with_column(
-            pl.when(pl.col("target") > 0).then(1).otherwise(0).alias("target")
-        )
-        interactions = interactions.sort("timestamp")
-        interactions = interactions.cache()
+        interactions.loc[interactions["target"] > 0, "target"] = 1
 
-        # Split data
-        train_data = interactions.filter(pl.col("timestamp") < dt.date(2019, 4, 14))
-        val_data = interactions.filter(pl.col("timestamp") >= dt.date(2019, 4, 14))
+        interactions = interactions.sort_values("timestamp").reset_index(drop=True)
 
-        # Transform train data to be BPR specific
-        train_data_neg = train_data.filter(pl.col("target") == 0)
-        train_data_pos = train_data.filter(pl.col("target") == 1)
-        train_data = train_data_neg.join(train_data_pos, on="user", how="inner")
+        # Split data into train/val/test
+        train_data = interactions[:1_000_000].reset_index(drop=True)
+        tmp0 = train_data.loc[train_data["target"] == 0, ["user", "item"]]
+        tmp1 = train_data.loc[train_data["target"] == 1, ["user", "item"]]
+        train_data = tmp0.merge(tmp1, "inner", "user", suffixes=("_neg", "_pos"))
+        # train_data = train_data.sample(frac=0.2, random_state=0).reset_index(drop=True)  # noqa
+        val_data = interactions[1_000_000:1_100_000].reset_index(drop=True)
+        test_data = interactions[1_100_000:].reset_index(drop=True)
 
-        # Prepare user/item to idx mappers
-        train_user_to_idx = train_data.select(
-            [
-                pl.col("user").unique(),
-                pl.col("user").unique().rank().cast(pl.Int64).alias("user_idx") - 1,
-            ]
-        )
-        train_item_to_idx = train_data.select(
-            [
-                pl.concat((pl.col("item"), pl.col("item_right"))).unique(),
-                pl.concat((pl.col("item"), pl.col("item_right")))
-                .unique()
-                .rank()
-                .cast(pl.Int64)
-                .alias("item_idx")
-                - 1,
-            ]
-        )
+        # Prepare unique train user and items
+        train_users = train_data["user"].unique()
+        item_neg_set = set(train_data["item_neg"])
+        item_pos_set = set(train_data["item_pos"])
+        train_items = pd.Series(list(item_neg_set | item_pos_set)).unique()
 
-        train_data = train_data.join(train_user_to_idx, on="user", how="inner")
-        train_data = train_data.join(train_item_to_idx, on="item", how="inner")
-        train_data = train_data.join(
-            train_item_to_idx, left_on="item_right", right_on="item", how="inner"
-        )
-        val_data = val_data.join(train_user_to_idx, on="user", how="inner")
-        val_data = val_data.join(train_item_to_idx, on="item", how="inner")
+        # Filter val/test data
+        val_data = val_data[val_data["user"].isin(train_users)]
+        val_data = val_data[val_data["item"].isin(train_items)]
+        val_data = val_data.reset_index(drop=True)
+        test_data = test_data[test_data["user"].isin(train_users)]
+        test_data = test_data[test_data["item"].isin(train_items)]
+        test_data = test_data.reset_index(drop=True)
 
-        # Select valid columns
-        train_data = train_data.select(
-            [
-                pl.col("user_idx").alias("user"),
-                pl.col("item_idx").alias("item_neg"),
-                pl.col("item_idx_right").alias("item_pos"),
-            ]
-        )
-        val_data = val_data.select(
-            [
-                pl.col("user_idx").alias("user"),
-                pl.col("item_idx").alias("item"),
-                "target",
-            ]
-        )
-        test_data = val_data  # test set == validation set (to change in the future!)
+        # Map idx
+        user_to_idx = {user: idx for idx, user in enumerate(train_users)}
+        item_to_idx = {item: idx for idx, item in enumerate(train_items)}
+        train_data["user"] = train_data["user"].map(user_to_idx)
+        train_data["item_neg"] = train_data["item_neg"].map(item_to_idx)
+        train_data["item_pos"] = train_data["item_pos"].map(item_to_idx)
+        val_data["user"] = val_data["user"].map(user_to_idx)
+        val_data["item"] = val_data["item"].map(item_to_idx)
+        test_data["user"] = test_data["user"].map(user_to_idx)
+        test_data["item"] = test_data["item"].map(item_to_idx)
 
-        return train_data.collect(), val_data.collect(), test_data.collect()
+        return train_data, val_data, test_data
 
     def save_data(self, train_data, val_data, test_data):
         train_data.to_parquet(

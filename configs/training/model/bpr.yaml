@@ -1,1 +1,3 @@
 _target_: src.training.models.task.BPRTask
+lr: 1e-3
+weight_decay: 1e-2

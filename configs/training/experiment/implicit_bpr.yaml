@@ -2,8 +2,8 @@
 
 defaults:
   - override /datamodule: bpr
-  - override /net: mlp  # mf
   - override /model: bpr
+  - override /net: mlp  # mf
 
 data_type: "implicit_bpr"
 clearml: true
