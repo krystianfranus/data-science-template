@@ -1,4 +1,4 @@
-_target_: src.training.datamodules.datamodule.BPRDataModule
+_target_: mypackage.training.datamodules.datamodule.BPRDataModule
 
 batch_size: 1024
 num_workers: 0

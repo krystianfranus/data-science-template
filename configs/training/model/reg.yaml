@@ -1,1 +1,1 @@
-_target_: src.training.models.task.RegressionTask
+_target_: mypackage.training.models.task.RegressionTask

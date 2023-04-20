@@ -4,7 +4,6 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
-import polars as pl
 
 
 class ContentWise:
@@ -28,7 +27,13 @@ class ContentWise:
         if self.data_type == "implicit":
             train_data, val_data, test_data, n_users, n_items = self._prepare_implicit()
         elif self.data_type == "implicit_bpr":
-            train_data, val_data, test_data, n_users, n_items = self._prepare_implicit_bpr()
+            (
+                train_data,
+                val_data,
+                test_data,
+                n_users,
+                n_items,
+            ) = self._prepare_implicit_bpr()
         return train_data, val_data, test_data, n_users, n_items
 
     # def _prepare_implicit_pl(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -112,7 +117,9 @@ class ContentWise:
     #
     #     return train_data.collect(), val_data.collect(), test_data.collect()
 
-    def _prepare_implicit(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, int, int]:
+    def _prepare_implicit(
+        self,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, int, int]:
         # Select 'clicks' only from all interactions
         interactions = self.interactions[
             self.interactions["interaction_type"] == 0
@@ -194,7 +201,9 @@ class ContentWise:
         n_items = unique_items.size
         return train_data, val_data, test_data, n_users, n_items
 
-    def _prepare_implicit_bpr(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, int, int]:
+    def _prepare_implicit_bpr(
+        self,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, int, int]:
         interactions = self.interactions[
             self.interactions["interaction_type"] == 0
         ].reset_index(drop=True)

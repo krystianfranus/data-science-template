@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 
 import lightning.pytorch as pl
 import torch

@@ -4,9 +4,9 @@ import lightning.pytorch as pl
 import pandas as pd
 from torch.utils.data import DataLoader, Dataset
 
-from src.training.datamodules.dataset import BPRDataset, TrainDataset
+from mypackage.training.datamodules.dataset import BPRDataset, TrainDataset
 
-# from src.training.datamodules.dataset import CustomIterableDataset
+# from mypackage.training.datamodules.dataset import CustomIterableDataset
 
 
 class SimpleDataModule(pl.LightningDataModule):

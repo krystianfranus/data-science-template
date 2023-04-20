@@ -1,4 +1,4 @@
-_target_: src.training.models.net.MLP
+_target_: mypackage.training.models.net.MLP
 n_users: ???
 n_items: ???
 n_factors: 8

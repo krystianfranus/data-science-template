@@ -7,7 +7,7 @@ from clearml import Task, TaskTypes
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
-from src.training.datamodules.dataset import PredictDataset
+from mypackage.training.datamodules import PredictDataset
 
 log = logging.getLogger(__name__)
 

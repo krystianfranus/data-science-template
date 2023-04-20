@@ -4,7 +4,7 @@ import hydra
 from clearml import Task, TaskTypes
 from omegaconf import DictConfig
 
-from src.preprocessing.preprocessing import ContentWise
+from mypackage.preprocessing.preprocessing import ContentWise
 
 log = logging.getLogger(__name__)
 
