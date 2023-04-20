@@ -32,7 +32,10 @@ def main(cfg: DictConfig):
     data = ContentWise(cfg.data_type)
 
     log.info("Data parsing")
-    train_data, val_data, test_data = data.prepare_data()
+    train_data, val_data, test_data, n_users, n_items = data.prepare_data()
+
+    params_dictionary = {"n_users": n_users, "n_items": n_items}
+    task.connect(params_dictionary)
 
     log.info("Data saving")
     if cfg.clearml:

@@ -26,10 +26,10 @@ class ContentWise:
     def prepare_data(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         train_data, val_data, test_data = None, None, None
         if self.data_type == "implicit":
-            train_data, val_data, test_data = self._prepare_implicit()
+            train_data, val_data, test_data, n_users, n_items = self._prepare_implicit()
         elif self.data_type == "implicit_bpr":
-            train_data, val_data, test_data = self._prepare_implicit_bpr()
-        return train_data, val_data, test_data
+            train_data, val_data, test_data, n_users, n_items = self._prepare_implicit_bpr()
+        return train_data, val_data, test_data, n_users, n_items
 
     # def _prepare_implicit_pl(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     #     # Select 'clicks' only from all interactions
@@ -112,7 +112,7 @@ class ContentWise:
     #
     #     return train_data.collect(), val_data.collect(), test_data.collect()
 
-    def _prepare_implicit(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    def _prepare_implicit(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, int, int]:
         # Select 'clicks' only from all interactions
         interactions = self.interactions[
             self.interactions["interaction_type"] == 0
@@ -190,9 +190,11 @@ class ContentWise:
             val_data.copy()
         )  # test set == validation set (to change in the future!)
 
-        return train_data, val_data, test_data
+        n_users = unique_users.size
+        n_items = unique_items.size
+        return train_data, val_data, test_data, n_users, n_items
 
-    def _prepare_implicit_bpr(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    def _prepare_implicit_bpr(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, int, int]:
         interactions = self.interactions[
             self.interactions["interaction_type"] == 0
         ].reset_index(drop=True)
@@ -266,7 +268,9 @@ class ContentWise:
         test_data["user"] = test_data["user"].map(user_to_idx)
         test_data["item"] = test_data["item"].map(item_to_idx)
 
-        return train_data, val_data, test_data
+        n_users = train_users.size
+        n_items = train_items.size
+        return train_data, val_data, test_data, n_users, n_items
 
     def save_data(self, train_data, val_data, test_data):
         train_data.to_parquet(

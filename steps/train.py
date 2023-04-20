@@ -60,8 +60,8 @@ def main(cfg: DictConfig):
     datamodule = hydra.utils.instantiate(cfg.datamodule, **datamodule_params)
 
     log.info("Model instantiating")
-    n_users = train_data["user"].nunique()
-    n_items = train_data["item"].nunique()
+    n_users = int(task_prev.get_parameter("General/n_users"))
+    n_items = int(task_prev.get_parameter("General/n_items"))
     net_params = {"n_users": n_users, "n_items": n_items}  # contentwise
     # net_params = {"n_users": 28028, "n_items": 6706}  # contentwise bpr
     net = hydra.utils.instantiate(cfg.net, **net_params)
