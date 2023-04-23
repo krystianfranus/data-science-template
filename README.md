@@ -40,7 +40,12 @@ clearml-agent daemon --queue default --docker my-docker-image
 Building docker image:
 
 ```shell
-docker build --tag my-docker-image .
+docker build -t ds-image .
+docker run -dit --gpus all --name ds-container ds-image
+docker exec -it ds-container bash
+
+docker compose up -d
+docker compose down
 ```
 
 

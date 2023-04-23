@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    image: ds-image
+    container_name: ds-container
+    ports:
+      - 8080:8080
+    volumes:
+      - .:/project
+      - /dev/null:/project/.env  # Exclude file
+    env_file:
+      - .env
+    stdin_open: true  # docker run -i
+    tty: true         # docker run -t
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
