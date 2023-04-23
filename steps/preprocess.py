@@ -15,18 +15,18 @@ log = logging.getLogger(__name__)
     version_base=None,
 )
 def main(cfg: DictConfig):
-    if cfg.clearml:
-        output_uri = None
-        if cfg.use_remote_storage:
-            output_uri = "s3://kf-north-bucket/data-science-template/output/"
-        task = Task.init(
-            project_name="MyProject",
-            task_name="Preprocessing",
-            task_type=TaskTypes.data_processing,
-            output_uri=output_uri,
-        )
-        if cfg.draft_mode:
-            task.execute_remotely()
+    output_uri = None
+    if cfg.use_remote_storage:
+        output_uri = "s3://kf-north-bucket/data-science-template/output/"
+    task = Task.init(
+        project_name="MyProject",
+        task_name="Preprocessing",
+        task_type=TaskTypes.data_processing,
+        reuse_last_task_id=False,
+        output_uri=output_uri,
+    )
+    if cfg.draft_mode:
+        task.execute_remotely()
 
     log.info("Data loading")
     data = ContentWise(cfg.data_type)
@@ -38,12 +38,10 @@ def main(cfg: DictConfig):
     task.connect(params_dictionary)
 
     log.info("Data saving")
-    if cfg.clearml:
-        task.upload_artifact("train_data", train_data, extension_name=".parquet")
-        task.upload_artifact("val_data", val_data, extension_name=".parquet")
-        task.upload_artifact("test_data", test_data, extension_name=".parquet")
-    else:
-        data.save_data(train_data, val_data, test_data)
+    task.upload_artifact("train_data", train_data, extension_name=".parquet")
+    task.upload_artifact("val_data", val_data, extension_name=".parquet")
+    task.upload_artifact("test_data", test_data, extension_name=".parquet")
+    data.save_data(train_data, val_data, test_data)
 
     log.info("Done!")
 

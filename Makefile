@@ -30,7 +30,7 @@ preprocess:
 
 ## Run training
 train:
-	python steps/train.py datamodule.num_workers=5 datamodule.pin_memory=true
+	python steps/train.py experiment=implicit
 
 ## Run Inferring
 infer:

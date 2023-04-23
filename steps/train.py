@@ -1,8 +1,6 @@
 import logging
-from pathlib import Path
 
 import hydra
-import pandas as pd
 from clearml import Task, TaskTypes
 from omegaconf import DictConfig
 
@@ -21,36 +19,25 @@ def main(cfg: DictConfig):
         output_uri = None
 
     log.info("Data loading")
-    if cfg.clearml:
-        task = Task.init(
-            project_name="MyProject",
-            task_name="Training",
-            task_type=TaskTypes.training,
-            reuse_last_task_id=False,
-            output_uri=output_uri,
-        )
+    task = Task.init(
+        project_name="MyProject",
+        task_name="Training",
+        task_type=TaskTypes.training,
+        reuse_last_task_id=False,
+        output_uri=output_uri,
+    )
 
-        if cfg.prev_task_id is not None:
-            task_prev = Task.get_task(task_id=cfg.prev_task_id)
-        else:
-            task_prev = Task.get_task(
-                project_name="MyProject", task_name="Preprocessing"
-            )
-
-        train_data = task_prev.artifacts["train_data"].get()
-        val_data = task_prev.artifacts["val_data"].get()
-        test_data = task_prev.artifacts["test_data"].get()
-
-        if cfg.draft_mode:
-            task.execute_remotely()
+    if cfg.prev_task_id is not None:
+        task_prev = Task.get_task(task_id=cfg.prev_task_id)
     else:
-        prefix = Path("data/contentwise/")
-        train_data_path = prefix / Path(f"train_data_{cfg.data_type}.parquet")
-        val_data_path = prefix / Path(f"val_data_{cfg.data_type}.parquet")
-        test_data_path = prefix / Path(f"test_data_{cfg.data_type}.parquet")
-        train_data = pd.read_parquet(train_data_path)
-        val_data = pd.read_parquet(val_data_path)
-        test_data = pd.read_parquet(test_data_path)
+        task_prev = Task.get_task(project_name="MyProject", task_name="Preprocessing")
+
+    train_data = task_prev.artifacts["train_data"].get()
+    val_data = task_prev.artifacts["val_data"].get()
+    test_data = task_prev.artifacts["test_data"].get()
+
+    if cfg.draft_mode:
+        task.execute_remotely()
 
     log.info("Datamodule Instantiating")
     datamodule_params = {

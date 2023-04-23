@@ -15,8 +15,6 @@ hydra:
   run:
     dir: .
 
-data_type: "implicit"
-clearml: false
 use_remote_storage: false
 draft_mode: false
 prev_task_id: null
