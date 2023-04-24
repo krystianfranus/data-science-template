@@ -4,9 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "my-package"
-dynamic = ["version", "dependencies"]
+version = "0.1.0"
+dynamic = ["dependencies"]
 authors = [
-  { name="Krystian Franus", email="krystian.franus@gmail.com" },
+  {name="Krystian Franus", email="krystian.franus@gmail.com"},
 ]
 description = "Short description"
 readme = "README.md"
@@ -22,5 +23,4 @@ classifiers = [
 "Homepage" = "https://github.com/krystianfranus/data-science-template"
 
 [tool.setuptools.dynamic]
-version = {file = "VERSION"}
 dependencies = {file = "requirements.txt"}
