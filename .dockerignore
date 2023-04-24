@@ -1,2 +1,22 @@
+# Docker
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.egg-info/
+
+# PyCharm
 .idea/
+
+# Environment variables
 .env
+
+data/
+lightning_logs/

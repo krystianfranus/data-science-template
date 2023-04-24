@@ -4,7 +4,7 @@ services:
     image: ds-image
     container_name: ds-container
     ports:
-      - 8080:8080
+      - 8888:8888
     volumes:
       - .:/project
       - /dev/null:/project/.env  # Exclude file
