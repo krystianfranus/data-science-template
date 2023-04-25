@@ -9,9 +9,9 @@ clearml==1.10.3
 clearml-agent==1.5.2
 
 # -------------- extras -------------- #
-notebook==6.5.2
+notebook==6.5.4
 matplotlib==3.7.1
-jupyter_nbextensions_configurator==0.6.1
+jupyter_contrib_nbextensions==0.7.0
 tensorboardX==2.6
 rich==13.3.3
 s3fs==0.4.2

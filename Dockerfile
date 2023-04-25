@@ -17,3 +17,4 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 WORKDIR /project
 COPY . .
 RUN pip install --upgrade pip && pip install -e .
+RUN jupyter contrib nbextension install

@@ -3,11 +3,11 @@ services:
     build: .
     image: ds-image
     container_name: ds-container
-    ports:
-      - 8888:8888
+    # ports:
+    #   - 8888:8888
     volumes:
       - .:/project
-      - /dev/null:/project/.env  # Exclude file
+      - /dev/null:/project/.env  # Exclude file with sensitive data
     env_file:
       - .env
     stdin_open: true  # docker run -i
