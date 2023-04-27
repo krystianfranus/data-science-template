@@ -1,0 +1,3 @@
+_target_: mypackage.training.models.task.BPRMLPTask
+lr: ???
+weight_decay: ???

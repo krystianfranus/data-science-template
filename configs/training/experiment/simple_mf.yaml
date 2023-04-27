@@ -2,11 +2,11 @@
 
 defaults:
   - override /datamodule: simple
-  - override /model: cla_mf
+  - override /model: simple_mf
   - override /net: mf
 
 datamodule:
-  num_workers: 6
+  num_workers: 8
   pin_memory: true
 
 model:

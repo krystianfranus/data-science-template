@@ -1,0 +1,22 @@
+# @package _global_
+
+defaults:
+  - override /datamodule: bpr
+  - override /model: bpr_mlp
+  - override /net: mlp
+
+datamodule:
+  num_workers: 8
+  pin_memory: true
+
+model:
+  lr: 1e-3
+  weight_decay: 1e-2
+
+net:
+  n_factors: 8
+  n_layers: 3
+  dropout: 0.5
+
+trainer:
+  accelerator: gpu

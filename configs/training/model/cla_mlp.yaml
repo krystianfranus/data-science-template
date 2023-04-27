@@ -1,3 +1,0 @@
-_target_: mypackage.training.models.task.ClassificationMLPTask
-lr: ???
-weight_decay: ???

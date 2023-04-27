@@ -1,0 +1,3 @@
+_target_: mypackage.training.models.task.SimpleMLPTask
+lr: ???
+weight_decay: ???

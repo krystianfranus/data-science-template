@@ -2,33 +2,33 @@ from typing import Any
 
 import lightning.pytorch as pl
 import torch
+from torch import nn, optim
 from torchmetrics.retrieval import RetrievalNormalizedDCG
 
 
-class ClassificationMFTask(pl.LightningModule):
+class SimpleMFTask(pl.LightningModule):
     def __init__(
         self,
-        net: torch.nn.Module,
+        net: nn.Module,
         lr: float,
     ):
         super().__init__()
         self.save_hyperparameters(logger=False, ignore=["net"])
         self.net = net
-        self.optimizer = torch.optim.SparseAdam
-        self.criterion = torch.nn.BCEWithLogitsLoss()
+        self.criterion = nn.BCEWithLogitsLoss()
         self.val_ndcg = RetrievalNormalizedDCG()
         self.val_step_outputs = []
 
     def forward(self, users: torch.Tensor, items: torch.Tensor):
         return self.net(users, items)
 
-    def step(self, batch: Any):
+    def step(self, batch):
         users, items, targets_true = batch
         targets_pred = self.forward(users, items)
         loss = self.criterion(targets_pred, targets_true)
         return loss, targets_true, targets_pred, users
 
-    def training_step(self, batch: Any, batch_idx: int):
+    def training_step(self, batch, batch_idx):
         loss, *_ = self.step(batch)
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         if batch_idx == 0:
@@ -40,7 +40,7 @@ class ClassificationMFTask(pl.LightningModule):
             )
         return loss
 
-    def validation_step(self, batch: Any, batch_idx: int):
+    def validation_step(self, batch, batch_idx):
         loss, targets_true, targets_pred, users = self.step(batch)
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.val_step_outputs.append((targets_pred, targets_true, users))
@@ -55,14 +55,14 @@ class ClassificationMFTask(pl.LightningModule):
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):
-        optimizer = self.optimizer(params=self.parameters(), lr=self.hparams.lr)
+        optimizer = optim.SparseAdam(params=self.parameters(), lr=self.hparams.lr)
         return optimizer
 
 
-class ClassificationMLPTask(pl.LightningModule):
+class SimpleMLPTask(pl.LightningModule):
     def __init__(
         self,
-        net: torch.nn.Module,
+        net: nn.Module,
         lr: float,
         weight_decay: float,
     ):
@@ -83,14 +83,14 @@ class ClassificationMLPTask(pl.LightningModule):
         loss = self.criterion(targets_pred, targets_true)
         return loss, targets_true, targets_pred, users
 
-    def training_step(self, batch: Any, batch_idx: int):
-        opt1, opt2 = self.optimizers()
-        opt1.zero_grad()
-        opt2.zero_grad()
+    def training_step(self, batch, batch_idx):
+        optimizer1, optimizer2 = self.optimizers()
+        optimizer2.zero_grad()
+        optimizer2.zero_grad()
         loss, *_ = self.step(batch)
         self.manual_backward(loss)
-        opt1.step()
-        opt2.step()
+        optimizer1.step()
+        optimizer2.step()
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         if batch_idx == 0:
             self.logger.experiment.add_histogram(
@@ -101,7 +101,7 @@ class ClassificationMLPTask(pl.LightningModule):
             )
         return loss
 
-    def validation_step(self, batch: Any, batch_idx: int):
+    def validation_step(self, batch, batch_idx):
         loss, targets_true, targets_pred, users = self.step(batch)
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.val_step_outputs.append((targets_pred, targets_true, users))
@@ -116,10 +116,8 @@ class ClassificationMLPTask(pl.LightningModule):
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):
-        optimizer1 = torch.optim.SparseAdam(
-            list(self.parameters())[:2], lr=self.hparams.lr
-        )
-        optimizer2 = torch.optim.Adam(
+        optimizer1 = optim.SparseAdam(list(self.parameters())[:2], lr=self.hparams.lr)
+        optimizer2 = optim.Adam(
             list(self.parameters())[2:],
             lr=self.hparams.lr,
             weight_decay=self.hparams.weight_decay,
@@ -140,40 +138,28 @@ def bpr_loss(positive_sim: torch.Tensor, negative_sim: torch.Tensor) -> torch.Te
     return bpr_loss
 
 
-class BPRTask(pl.LightningModule):
+class BPRMFTask(pl.LightningModule):
     def __init__(
         self,
-        net: torch.nn.Module,
+        net: nn.Module,
         lr: float,
-        weight_decay: float,
     ):
         super().__init__()
         self.save_hyperparameters(logger=False, ignore=["net"])
-
         self.net = net
         # sigmoid ?
         self.criterion = bpr_loss
-
         self.val_ndcg = RetrievalNormalizedDCG()
         self.val_step_outputs = []
-        self.automatic_optimization = False
 
     def forward(self, users: torch.Tensor, items: torch.Tensor):
         return self.net(users, items)
 
-    def training_step(self, batch: Any, batch_idx: int):
-        opt1, opt2 = self.optimizers()
-        opt1.zero_grad()
-        opt2.zero_grad()
-
+    def training_step(self, batch, batch_idx):
         users, items_neg, items_pos = batch
         pred_neg = self.forward(users, items_neg)
         pred_pos = self.forward(users, items_pos)
         loss = self.criterion(pred_pos, pred_neg)
-
-        self.manual_backward(loss)
-        opt1.step()
-        opt2.step()
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         if batch_idx == 0:
             self.logger.experiment.add_histogram(
@@ -184,12 +170,10 @@ class BPRTask(pl.LightningModule):
             )
         return loss
 
-    def validation_step(self, batch: Any, batch_idx: int):
+    def validation_step(self, batch, batch_idx):
         users, items, targets_true = batch
         targets_pred = self.forward(users, items)
         loss = self.criterion(targets_pred, targets_true)
-        # return loss, targets_true, targets_pred, users
-        # loss, targets_true, targets_pred, users = self.step(batch)
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.val_step_outputs.append((targets_pred, targets_true, users))
 
@@ -203,10 +187,69 @@ class BPRTask(pl.LightningModule):
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):
-        optimizer1 = torch.optim.SparseAdam(
-            list(self.parameters())[:2], lr=self.hparams.lr
-        )
-        optimizer2 = torch.optim.Adam(
+        optimizer = optim.SparseAdam(params=self.parameters(), lr=self.hparams.lr)
+        return optimizer
+
+
+class BPRMLPTask(pl.LightningModule):
+    def __init__(
+        self,
+        net: nn.Module,
+        lr: float,
+        weight_decay: float,
+    ):
+        super().__init__()
+        self.save_hyperparameters(logger=False, ignore=["net"])
+        self.net = net
+        # sigmoid ?
+        self.criterion = bpr_loss
+        self.val_ndcg = RetrievalNormalizedDCG()
+        self.val_step_outputs = []
+        self.automatic_optimization = False
+
+    def forward(self, users: torch.Tensor, items: torch.Tensor):
+        return self.net(users, items)
+
+    def training_step(self, batch, batch_idx):
+        optimizer1, optimizer2 = self.optimizers()
+        optimizer1.zero_grad()
+        optimizer2.zero_grad()
+        users, items_neg, items_pos = batch
+        pred_neg = self.forward(users, items_neg)
+        pred_pos = self.forward(users, items_pos)
+        loss = self.criterion(pred_pos, pred_neg)
+        self.manual_backward(loss)
+        optimizer1.step()
+        optimizer2.step()
+        self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        if batch_idx == 0:
+            self.logger.experiment.add_histogram(
+                "embed_user", self.net.embed_user.weight, self.current_epoch, bins="fd"
+            )
+            self.logger.experiment.add_histogram(
+                "embed_item", self.net.embed_item.weight, self.current_epoch, bins="fd"
+            )
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        users, items, targets_true = batch
+        targets_pred = self.forward(users, items)
+        loss = self.criterion(targets_pred, targets_true)
+        self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.val_step_outputs.append((targets_pred, targets_true, users))
+
+    def on_validation_epoch_end(self):
+        # https://github.com/Lightning-AI/lightning/pull/16520
+        targets_pred = torch.cat([tp for tp, *_ in self.val_step_outputs])
+        targets_true = torch.cat([tt for _, tt, _ in self.val_step_outputs])
+        indexes = torch.cat([u for *_, u in self.val_step_outputs])
+        self.val_ndcg(targets_pred, targets_true, indexes=indexes)
+        self.log("val/ndcg", self.val_ndcg, prog_bar=True)
+        self.val_step_outputs.clear()
+
+    def configure_optimizers(self):
+        optimizer1 = optim.SparseAdam(list(self.parameters())[:2], lr=self.hparams.lr)
+        optimizer2 = optim.Adam(
             list(self.parameters())[2:],
             lr=self.hparams.lr,
             weight_decay=self.hparams.weight_decay,

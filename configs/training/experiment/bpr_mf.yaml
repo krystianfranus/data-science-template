@@ -2,21 +2,18 @@
 
 defaults:
   - override /datamodule: bpr
-  - override /model: bpr
-  - override /net: mlp
+  - override /model: bpr_mf
+  - override /net: mf
 
 datamodule:
-  num_workers: 6
+  num_workers: 8
   pin_memory: true
 
 model:
   lr: 1e-3
-  weight_decay: 1e-2
 
 net:
-  n_factors: 8
-  n_layers: 3
-  dropout: 0.5
+  embed_size: 24
 
 trainer:
   accelerator: gpu
