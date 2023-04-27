@@ -2,12 +2,18 @@
 
 defaults:
   - override /datamodule: simple
-  - override /model: cla_mlp  # cla_mf
-  - override /net: mlp  # mf
+  - override /model: cla_mf
+  - override /net: mf
 
 datamodule:
   num_workers: 6
   pin_memory: true
+
+model:
+  lr: 1e-3
+
+net:
+  embed_size: 24
 
 trainer:
   accelerator: gpu

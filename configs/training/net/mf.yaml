@@ -1,4 +1,4 @@
 _target_: mypackage.training.models.net.MF
 n_users: ???
 n_items: ???
-embed_size: 24
+embed_size: ???

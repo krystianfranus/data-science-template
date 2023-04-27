@@ -1,6 +1,6 @@
 _target_: mypackage.training.models.net.MLP
 n_users: ???
 n_items: ???
-n_factors: 8
-n_layers: 3
-dropout: 0.5
+n_factors: ???
+n_layers: ???
+dropout: ???
