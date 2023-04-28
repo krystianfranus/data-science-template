@@ -25,14 +25,14 @@ class ContentWise:
 
     def prepare_data(self) -> None:
         match self.data_type:
-            case "implicit":
-                self._prepare_implicit()
-            case "implicit_bpr":
-                self._prepare_implicit_bpr()
+            case "simple":
+                self._prepare_simple()
+            case "bpr":
+                self._prepare_bpr()
             case _:
                 raise ValueError(f"Invalid data type, you provided '{self.data_type}'")
 
-    def _prepare_implicit(self) -> None:
+    def _prepare_simple(self) -> None:
         interactions = self._common()
 
         # Split data
@@ -81,7 +81,7 @@ class ContentWise:
             self.val_data.copy()
         )  # test set == validation set (to change in the future!)
 
-    def _prepare_implicit_bpr(self) -> None:
+    def _prepare_bpr(self) -> None:
         interactions = self._common()
 
         # Split data

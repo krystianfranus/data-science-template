@@ -33,10 +33,16 @@ class SimpleMFTask(pl.LightningModule):
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         if batch_idx == 0:
             self.logger.experiment.add_histogram(
-                "embed_user", self.net.embed_user.weight, self.current_epoch, bins="fd"
+                "embed_user",
+                self.net.embed_user.weight[:, 0],
+                self.current_epoch,
+                bins="fd",
             )
             self.logger.experiment.add_histogram(
-                "embed_item", self.net.embed_item.weight, self.current_epoch, bins="fd"
+                "embed_item",
+                self.net.embed_item.weight[:, 0],
+                self.current_epoch,
+                bins="fd",
             )
         return loss
 
@@ -63,13 +69,14 @@ class SimpleMLPTask(pl.LightningModule):
     def __init__(
         self,
         net: nn.Module,
-        lr: float,
+        lr1: float,
+        lr2: float,
         weight_decay: float,
     ):
         super().__init__()
         self.save_hyperparameters(logger=False, ignore=["net"])
         self.net = net
-        self.criterion = torch.nn.BCEWithLogitsLoss()
+        self.criterion = nn.BCEWithLogitsLoss()
         self.val_ndcg = RetrievalNormalizedDCG()
         self.val_step_outputs = []
         self.automatic_optimization = False
@@ -84,6 +91,20 @@ class SimpleMLPTask(pl.LightningModule):
         return loss, targets_true, targets_pred, users
 
     def training_step(self, batch, batch_idx):
+        if batch_idx == 0:
+            self.logger.experiment.add_histogram(
+                "embed_user",
+                self.net.embed_user.weight[:, 0],
+                self.current_epoch,
+                bins="fd",
+            )
+            self.logger.experiment.add_histogram(
+                "embed_item",
+                self.net.embed_item.weight[:, 0],
+                self.current_epoch,
+                bins="fd",
+            )
+
         optimizer1, optimizer2 = self.optimizers()
         optimizer2.zero_grad()
         optimizer2.zero_grad()
@@ -92,13 +113,7 @@ class SimpleMLPTask(pl.LightningModule):
         optimizer1.step()
         optimizer2.step()
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-        if batch_idx == 0:
-            self.logger.experiment.add_histogram(
-                "embed_user", self.net.embed_user.weight, self.current_epoch, bins="fd"
-            )
-            self.logger.experiment.add_histogram(
-                "embed_item", self.net.embed_item.weight, self.current_epoch, bins="fd"
-            )
+
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -116,10 +131,10 @@ class SimpleMLPTask(pl.LightningModule):
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):
-        optimizer1 = optim.SparseAdam(list(self.parameters())[:2], lr=self.hparams.lr)
+        optimizer1 = optim.SparseAdam(list(self.parameters())[:2], lr=self.hparams.lr1)
         optimizer2 = optim.Adam(
             list(self.parameters())[2:],
-            lr=self.hparams.lr,
+            lr=self.hparams.lr2,
             weight_decay=self.hparams.weight_decay,
         )
         return optimizer1, optimizer2
@@ -163,10 +178,16 @@ class BPRMFTask(pl.LightningModule):
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         if batch_idx == 0:
             self.logger.experiment.add_histogram(
-                "embed_user", self.net.embed_user.weight, self.current_epoch, bins="fd"
+                "embed_user",
+                self.net.embed_user.weight[:, 0],
+                self.current_epoch,
+                bins="fd",
             )
             self.logger.experiment.add_histogram(
-                "embed_item", self.net.embed_item.weight, self.current_epoch, bins="fd"
+                "embed_item",
+                self.net.embed_item.weight[:, 0],
+                self.current_epoch,
+                bins="fd",
             )
         return loss
 
@@ -195,7 +216,8 @@ class BPRMLPTask(pl.LightningModule):
     def __init__(
         self,
         net: nn.Module,
-        lr: float,
+        lr1: float,
+        lr2: float,
         weight_decay: float,
     ):
         super().__init__()
@@ -224,10 +246,16 @@ class BPRMLPTask(pl.LightningModule):
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         if batch_idx == 0:
             self.logger.experiment.add_histogram(
-                "embed_user", self.net.embed_user.weight, self.current_epoch, bins="fd"
+                "embed_user",
+                self.net.embed_user.weight[:, 0],
+                self.current_epoch,
+                bins="fd",
             )
             self.logger.experiment.add_histogram(
-                "embed_item", self.net.embed_item.weight, self.current_epoch, bins="fd"
+                "embed_item",
+                self.net.embed_item.weight[:, 0],
+                self.current_epoch,
+                bins="fd",
             )
         return loss
 
@@ -248,10 +276,10 @@ class BPRMLPTask(pl.LightningModule):
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):
-        optimizer1 = optim.SparseAdam(list(self.parameters())[:2], lr=self.hparams.lr)
+        optimizer1 = optim.SparseAdam(list(self.parameters())[:2], lr=self.hparams.lr1)
         optimizer2 = optim.Adam(
             list(self.parameters())[2:],
-            lr=self.hparams.lr,
+            lr=self.hparams.lr2,
             weight_decay=self.hparams.weight_decay,
         )
         return optimizer1, optimizer2

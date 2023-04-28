@@ -10,8 +10,9 @@ datamodule:
   pin_memory: true
 
 model:
-  lr: 1e-3
-  weight_decay: 1e-2
+  lr1: 1e-3
+  lr2: 1e-3
+  weight_decay: 5e-2
 
 net:
   n_factors: 8
@@ -20,3 +21,4 @@ net:
 
 trainer:
   accelerator: gpu
+  max_epochs: 3

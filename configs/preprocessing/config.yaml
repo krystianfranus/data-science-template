@@ -7,6 +7,6 @@ hydra:
   run:
     dir: .
 
-data_type: "implicit"
+data_type: ???
 use_remote_storage: false
 draft_mode: false

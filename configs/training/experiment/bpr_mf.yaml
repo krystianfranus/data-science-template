@@ -17,3 +17,4 @@ net:
 
 trainer:
   accelerator: gpu
+  max_epochs: 3

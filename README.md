@@ -26,8 +26,8 @@ pip install .  # Add flag -e to install in editable mode
 ## Quick start
 
 ```shell
-python steps/preprocess.py
-python steps/train.py experiment=implicit_mlp
+python steps/preprocess.py data_type=simple
+python steps/train.py experiment=simple_mlp
 ```
 
 
