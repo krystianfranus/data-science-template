@@ -3,17 +3,14 @@
 defaults:
   - override /datamodule: bpr
   - override /model: bpr_mf
-  - override /net: mf
 
 datamodule:
   num_workers: 8
   pin_memory: true
 
 model:
-  lr: 1e-3
-
-net:
   embed_size: 24
+  lr: 1e-3
 
 trainer:
   accelerator: gpu

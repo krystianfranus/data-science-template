@@ -50,10 +50,8 @@ def main(cfg: DictConfig):
     log.info("Model instantiating")
     n_users = int(task_prev.get_parameter("General/n_users"))
     n_items = int(task_prev.get_parameter("General/n_items"))
-    net_params = {"n_users": n_users, "n_items": n_items}  # contentwise
-    # net_params = {"n_users": 28028, "n_items": 6706}  # contentwise bpr
-    net = hydra.utils.instantiate(cfg.net, **net_params)
-    model = hydra.utils.instantiate(cfg.model, net=net)
+    net_params = {"n_users": n_users, "n_items": n_items}
+    model = hydra.utils.instantiate(cfg.model, **net_params)
 
     log.info("Callbacks instantiating")
     callbacks = []

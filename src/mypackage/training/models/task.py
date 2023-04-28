@@ -5,16 +5,20 @@ import torch
 from torch import nn, optim
 from torchmetrics.retrieval import RetrievalNormalizedDCG
 
+from mypackage.training.models.net import MF, MLP
+
 
 class SimpleMFTask(pl.LightningModule):
     def __init__(
         self,
-        net: nn.Module,
+        n_users: int,
+        n_items: int,
+        embed_size: int,
         lr: float,
     ):
         super().__init__()
-        self.save_hyperparameters(logger=False, ignore=["net"])
-        self.net = net
+        self.save_hyperparameters(logger=False)
+        self.net = MF(n_users, n_items, embed_size)
         self.criterion = nn.BCEWithLogitsLoss()
         self.val_ndcg = RetrievalNormalizedDCG()
         self.val_step_outputs = []
@@ -68,14 +72,18 @@ class SimpleMFTask(pl.LightningModule):
 class SimpleMLPTask(pl.LightningModule):
     def __init__(
         self,
-        net: nn.Module,
+        n_users: int,
+        n_items: int,
+        n_factors: int,
+        n_layers: int,
+        dropout: float,
         lr1: float,
         lr2: float,
         weight_decay: float,
     ):
         super().__init__()
-        self.save_hyperparameters(logger=False, ignore=["net"])
-        self.net = net
+        self.save_hyperparameters(logger=False)
+        self.net = MLP(n_users, n_items, n_factors, n_layers, dropout)
         self.criterion = nn.BCEWithLogitsLoss()
         self.val_ndcg = RetrievalNormalizedDCG()
         self.val_step_outputs = []
@@ -156,12 +164,14 @@ def bpr_loss(positive_sim: torch.Tensor, negative_sim: torch.Tensor) -> torch.Te
 class BPRMFTask(pl.LightningModule):
     def __init__(
         self,
-        net: nn.Module,
+        n_users: int,
+        n_items: int,
+        embed_size: int,
         lr: float,
     ):
         super().__init__()
-        self.save_hyperparameters(logger=False, ignore=["net"])
-        self.net = net
+        self.save_hyperparameters(logger=False)
+        self.net = MF(n_users, n_items, embed_size)
         # sigmoid ?
         self.criterion = bpr_loss
         self.val_ndcg = RetrievalNormalizedDCG()
@@ -215,14 +225,18 @@ class BPRMFTask(pl.LightningModule):
 class BPRMLPTask(pl.LightningModule):
     def __init__(
         self,
-        net: nn.Module,
+        n_users: int,
+        n_items: int,
+        n_factors: int,
+        n_layers: int,
+        dropout: float,
         lr1: float,
         lr2: float,
         weight_decay: float,
     ):
         super().__init__()
-        self.save_hyperparameters(logger=False, ignore=["net"])
-        self.net = net
+        self.save_hyperparameters(logger=False)
+        self.net = MLP(n_users, n_items, n_factors, n_layers, dropout)
         # sigmoid ?
         self.criterion = bpr_loss
         self.val_ndcg = RetrievalNormalizedDCG()
