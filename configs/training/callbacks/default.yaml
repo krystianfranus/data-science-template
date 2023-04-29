@@ -1,7 +1,8 @@
 model_checkpoint:
   _target_: lightning.pytorch.callbacks.ModelCheckpoint
-  save_last: true
-  save_top_k: 0
+  filename: "best_model"
+  save_last: false
+  save_top_k: 1
   monitor: "val/ndcg"
   mode: "max"
 

@@ -38,13 +38,13 @@ class SimpleMFTask(pl.LightningModule):
         if batch_idx == 0:
             self.logger.experiment.add_histogram(
                 "embed_user",
-                self.net.embed_user.weight[:, 0],
+                self.net.embed_user.weight.data[:, 0],
                 self.current_epoch,
                 bins="fd",
             )
             self.logger.experiment.add_histogram(
                 "embed_item",
-                self.net.embed_item.weight[:, 0],
+                self.net.embed_item.weight.data[:, 0],
                 self.current_epoch,
                 bins="fd",
             )
@@ -102,13 +102,13 @@ class SimpleMLPTask(pl.LightningModule):
         if batch_idx == 0:
             self.logger.experiment.add_histogram(
                 "embed_user",
-                self.net.embed_user.weight[:, 0],
+                self.net.embed_user.weight.data[:, 0],
                 self.current_epoch,
                 bins="fd",
             )
             self.logger.experiment.add_histogram(
                 "embed_item",
-                self.net.embed_item.weight[:, 0],
+                self.net.embed_item.weight.data[:, 0],
                 self.current_epoch,
                 bins="fd",
             )
@@ -189,13 +189,13 @@ class BPRMFTask(pl.LightningModule):
         if batch_idx == 0:
             self.logger.experiment.add_histogram(
                 "embed_user",
-                self.net.embed_user.weight[:, 0],
+                self.net.embed_user.weight.data[:, 0],
                 self.current_epoch,
                 bins="fd",
             )
             self.logger.experiment.add_histogram(
                 "embed_item",
-                self.net.embed_item.weight[:, 0],
+                self.net.embed_item.weight.data[:, 0],
                 self.current_epoch,
                 bins="fd",
             )
@@ -261,13 +261,13 @@ class BPRMLPTask(pl.LightningModule):
         if batch_idx == 0:
             self.logger.experiment.add_histogram(
                 "embed_user",
-                self.net.embed_user.weight[:, 0],
+                self.net.embed_user.weight.data[:, 0],
                 self.current_epoch,
                 bins="fd",
             )
             self.logger.experiment.add_histogram(
                 "embed_item",
-                self.net.embed_item.weight[:, 0],
+                self.net.embed_item.weight.data[:, 0],
                 self.current_epoch,
                 bins="fd",
             )

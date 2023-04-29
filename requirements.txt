@@ -9,6 +9,7 @@ clearml-agent==1.5.2
 
 # -------------- extras -------------- #
 notebook==6.5.4
+scikit-learn==1.2.2
 matplotlib==3.7.1
 jupyter_contrib_nbextensions==0.7.0
 tensorboardX==2.6

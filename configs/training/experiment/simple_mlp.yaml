@@ -17,5 +17,5 @@ model:
   weight_decay: 5e-2
 
 trainer:
-  accelerator: gpu
+  accelerator: "gpu"
   max_epochs: 3

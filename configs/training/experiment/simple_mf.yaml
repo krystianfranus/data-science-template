@@ -13,5 +13,5 @@ model:
   lr: 1e-3
 
 trainer:
-  accelerator: gpu
+  accelerator: "gpu"
   max_epochs: 3
