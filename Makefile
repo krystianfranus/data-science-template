@@ -14,7 +14,7 @@ endif
 create_env:
 ifeq (True,$(HAS_CONDA))
 	@echo ">>> Detected conda, creating conda environment."
-	conda create --name ds-template python=3.10.10
+	conda create --name ds-template python=3.10.11
 	@echo ">>> New conda env created. Activate with:\nconda activate ds-template"
 else
 	@echo ">>> Install conda first."
