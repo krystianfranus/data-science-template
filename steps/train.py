@@ -1,4 +1,5 @@
 import logging
+import os
 
 import hydra
 from clearml import Task, TaskTypes
@@ -8,7 +9,7 @@ log = logging.getLogger(__name__)
 
 
 @hydra.main(
-    config_path="../configs/training/",
+    config_path=os.path.join(os.getcwd(), "configs", "training"),
     config_name="config",
     version_base=None,
 )
