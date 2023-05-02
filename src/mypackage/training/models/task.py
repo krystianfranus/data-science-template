@@ -92,6 +92,9 @@ class SimpleMLPTask(pl.LightningModule):
     def forward(self, users: torch.Tensor, items: torch.Tensor):
         return self.net(users, items)
 
+    def predict(self, users: torch.Tensor, items: torch.Tensor):
+        return torch.sigmoid(self.net(users, items))
+
     def step(self, batch: Any):
         users, items, targets_true = batch
         targets_pred = self.forward(users, items)
