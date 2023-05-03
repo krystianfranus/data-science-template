@@ -42,17 +42,6 @@ class CustomIterableDataset(IterableDataset):
         return mapped_itr
 
 
-# class PredictDataset(Dataset):
-#     def __init__(self, x: torch.tensor):
-#         self.x = x
-#
-#     def __len__(self):
-#         return len(self.x)
-#
-#     def __getitem__(self, idx):
-#         return self.x[idx]
-
-
 class BPRDataset(Dataset):
     def __init__(self, data: pd.DataFrame):
         self.users = torch.tensor(data.iloc[:, 0].to_numpy())

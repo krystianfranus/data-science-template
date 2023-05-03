@@ -1,64 +1,108 @@
 import logging
+import os
 
 import hydra
-import pytorch_lightning as pl
 import torch
 from clearml import Task, TaskTypes
 from omegaconf import DictConfig
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 
-from mypackage.training.datamodules import PredictDataset
+from mypackage.training.models.task import (
+    BPRMFTask,
+    BPRMLPTask,
+    SimpleMFTask,
+    SimpleMLPTask,
+)
 
 log = logging.getLogger(__name__)
 
 
 @hydra.main(
-    version_base=None, config_path="../configs/inference/", config_name="config"
+    config_path=os.path.join(os.getcwd(), "configs", "inference"),
+    config_name="config",
+    version_base=None,
 )
-def main(config: DictConfig):
+def main(cfg: DictConfig):
     task = Task.init(
-        project_name="My project",
+        project_name="MyProject",
         task_name="Inference",
         task_type=TaskTypes.inference,
+        reuse_last_task_id=False,
+        output_uri=None,
     )
 
-    if config.execute_remotely:
+    if cfg.execute_remotely:
         task.execute_remotely()
 
-    if config.prev_task_id is not None:
-        task_prev = Task.get_task(task_id=config.prev_task_id)
+    if cfg.prev_task_id is not None:
+        task_prev = Task.get_task(task_id=cfg.prev_task_id)
     else:
-        task_prev = Task.get_task(project_name="My project", task_name="Training")
+        task_prev = Task.get_task(project_name="MyProject", task_name="Training")
+    n_users = int(task_prev.get_parameter("General/n_users"))
+    n_items = int(task_prev.get_parameter("General/n_items"))
 
-    log.info("[My Logger] Preparing dataloader")
-    x = torch.tensor([[1.0], [1.5]])
-    dataset = PredictDataset(x)
-    dataloader = DataLoader(
-        dataset,
-        batch_size=1,
-        num_workers=config.num_workers,
-        pin_memory=config.pin_memory,
-    )
+    log.info("Instantiating model")
+    ckpt_path = task_prev.models["input"][-1].get_local_copy()
+    match cfg.model_type:
+        case "simple_mlp":
+            model = SimpleMLPTask.load_from_checkpoint(ckpt_path)
+        case "simple_mf":
+            model = SimpleMFTask.load_from_checkpoint(ckpt_path)
+        case "bpr_mlp":
+            model = BPRMLPTask.load_from_checkpoint(ckpt_path)
+        case "bpr_mf":
+            model = BPRMFTask.load_from_checkpoint(ckpt_path)
+        case _:
+            raise ValueError(f"Invalid model type, you provided '{cfg.model_type}'")
 
-    log.info("[My Logger] Instantiating model")
-    model = hydra.utils.instantiate(config.model)
-    ckpt_path = task_prev.models["output"][-1].get_local_copy()
+    log.info("Preparing dataloader")
 
-    log.info("[My Logger] Instantiating trainer")
-    trainer = pl.Trainer(
-        logger=False,
-        enable_checkpointing=False,
-        accelerator="gpu",
-        devices=1,
-        max_epochs=5,
-        log_every_n_steps=5,
-    )
+    class TmpDataset(Dataset):
+        def __init__(self, n_users, n_items):
+            self.n_users = n_users
+            self.n_items = n_items
 
-    log.info("[My Logger] Inferring")
-    predictions = trainer.predict(model, dataloader, ckpt_path=ckpt_path)
+        def __len__(self):
+            return self.n_users * self.n_items
 
-    mean_predictions = torch.mean(torch.concat(predictions))
-    log.info(f"[My Logger] Results - Mean predictions: {mean_predictions}")
+        def __getitem__(self, idx):
+            user = idx // self.n_users
+            item = idx % self.n_items
+            return user, item
+
+    dataset = TmpDataset(n_users, n_items)
+    dataloader = DataLoader(dataset, batch_size=n_items, num_workers=8, pin_memory=True)
+
+    log.info("Main loop")
+    model.eval()
+    device = torch.device("cuda:0")
+    big_scores = torch.empty((5, n_items))
+    k = 0
+    with torch.no_grad():
+        for users, items in dataloader:
+            users = users.to(device)
+            items = items.to(device)
+            scores = model.predict(users, items)
+            big_scores[k, :] = scores.cpu()
+
+            if k == 4:
+                break
+            k += 1
+    log.info(f"Some results: {big_scores.shape}")
+
+    # log.info("[My Logger] Instantiating trainer")
+    # trainer = pl.Trainer(
+    #     logger=False,
+    #     enable_checkpointing=False,
+    #     accelerator="gpu",
+    #     devices=1,
+    #     max_epochs=5,
+    #     log_every_n_steps=5,
+    # )
+    # log.info("[My Logger] Inferring")
+    # predictions = trainer.predict(model, dataloader, ckpt_path=ckpt_path)
+    # mean_predictions = torch.mean(torch.concat(predictions))
+    # log.info(f"[My Logger] Results - Mean predictions: {mean_predictions}")
 
     log.info("[My Logger] Done!")
 

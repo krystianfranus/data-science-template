@@ -25,16 +25,16 @@ def main():
         # },  # It also works
     )
 
-    # pipe.add_step(
-    #     name="Inference",
-    #     base_task_project="My project",
-    #     base_task_name="Inference",
-    #     cache_executed_step=True,
-    #     parents=["Training"],
-    #     parameter_override={
-    #         "Args/overrides": "['prev_task_id=${Training.id}', 'num_workers=5', 'pin_memory=true']"  # noqa
-    #     },
-    # )
+    pipe.add_step(
+        name="Inference",
+        base_task_project="MyProject",
+        base_task_name="Inference",
+        cache_executed_step=True,
+        parents=["Training"],
+        parameter_override={
+            "Hydra/prev_task_id": "${Training.id}"
+        },
+    )
 
     # for debugging purposes use local jobs
     # pipe.start_locally(run_pipeline_steps_locally=False)

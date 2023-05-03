@@ -2,6 +2,7 @@ import logging
 import os
 
 import hydra
+import torch
 from clearml import Task, TaskTypes
 from omegaconf import DictConfig
 
@@ -52,6 +53,7 @@ def main(cfg: DictConfig):
     n_users = int(task_prev.get_parameter("General/n_users"))
     n_items = int(task_prev.get_parameter("General/n_items"))
     net_params = {"n_users": n_users, "n_items": n_items}
+    task.connect(net_params)
     model = hydra.utils.instantiate(cfg.model, **net_params)
 
     log.info("Callbacks instantiating")
@@ -65,8 +67,13 @@ def main(cfg: DictConfig):
 
     log.info("Training")
     trainer.fit(model=model, datamodule=datamodule)
-    # log.info("[My Logger] Testing")
-    # trainer.test(model=model, datamodule=datamodule)
+
+    # Temporary snippet of code - workaround for model saving into clearml env
+    best_model = model.load_from_checkpoint(trainer.callbacks[3].best_model_path)
+    torch.save(
+        best_model.state_dict(),
+        trainer.callbacks[3].best_model_path.replace("ckpt", "pt"),
+    )
 
     log.info("Done!")
 
