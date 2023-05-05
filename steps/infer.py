@@ -76,7 +76,7 @@ def main(cfg: DictConfig):
     log.info("Main loop")
     model.eval()
     device = torch.device("cuda:0")
-    big_scores = torch.empty((5, n_items))
+    big_scores = torch.empty((n_users, n_items))
     k = 0
     with torch.no_grad():
         for users, items in dataloader:
@@ -84,9 +84,6 @@ def main(cfg: DictConfig):
             items = items.to(device)
             scores = model.predict(users, items)
             big_scores[k, :] = scores.cpu()
-
-            if k == 4:
-                break
             k += 1
     log.info(f"Some results: {big_scores.shape}")
 

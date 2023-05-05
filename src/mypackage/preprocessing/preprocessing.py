@@ -183,4 +183,23 @@ class ContentWise:
         )
         interactions.loc[interactions["target"] > 0, "target"] = 1
 
+        # Get rid of inactive users and items
+        tmp_u = (
+            interactions.groupby("user")
+            .agg({"target": "sum"})
+            .rename(columns={"target": "sum"})
+            .reset_index()
+        )
+        tmp_u = tmp_u[tmp_u["sum"] >= 5]
+        interactions = interactions.merge(tmp_u, "inner", "user")
+        tmp_i = (
+            interactions.groupby("item")
+            .agg({"target": "sum"})
+            .rename(columns={"target": "sum"})
+            .reset_index()
+        )
+        tmp_i = tmp_i[tmp_i["sum"] >= 10]
+        interactions = interactions.merge(tmp_i, "inner", "item")
+        interactions = interactions[["user", "item", "target", "timestamp"]]
+
         return interactions

@@ -1,8 +1,8 @@
-from typing import Any
+from typing import Any, Optional
 
 import lightning.pytorch as pl
 import torch
-from torch import nn, optim
+from torch import Tensor, nn, optim
 from torchmetrics.retrieval import RetrievalNormalizedDCG
 
 from mypackage.training.models.net import MF, MLP
@@ -15,16 +15,20 @@ class SimpleMFTask(pl.LightningModule):
         n_items: int,
         embed_size: int,
         lr: float,
+        pos_weight: Optional[Tensor] = None,
     ):
         super().__init__()
         self.save_hyperparameters(logger=False)
         self.net = MF(n_users, n_items, embed_size)
-        self.criterion = nn.BCEWithLogitsLoss()
+        self.criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
         self.val_ndcg = RetrievalNormalizedDCG()
         self.val_step_outputs = []
 
     def forward(self, users: torch.Tensor, items: torch.Tensor):
         return self.net(users, items)
+
+    def predict(self, users: torch.Tensor, items: torch.Tensor):
+        return torch.sigmoid(self.net(users, items))
 
     def step(self, batch):
         users, items, targets_true = batch
@@ -80,11 +84,12 @@ class SimpleMLPTask(pl.LightningModule):
         lr1: float,
         lr2: float,
         weight_decay: float,
+        pos_weight: Optional[Tensor] = None,
     ):
         super().__init__()
         self.save_hyperparameters(logger=False)
         self.net = MLP(n_users, n_items, n_factors, n_layers, dropout)
-        self.criterion = nn.BCEWithLogitsLoss()
+        self.criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
         self.val_ndcg = RetrievalNormalizedDCG()
         self.val_step_outputs = []
         self.automatic_optimization = False
@@ -171,6 +176,7 @@ class BPRMFTask(pl.LightningModule):
         n_items: int,
         embed_size: int,
         lr: float,
+        pos_weight: Optional[Tensor] = None,  # TODO: fix
     ):
         super().__init__()
         self.save_hyperparameters(logger=False)
@@ -236,6 +242,7 @@ class BPRMLPTask(pl.LightningModule):
         lr1: float,
         lr2: float,
         weight_decay: float,
+        pos_weight: Optional[Tensor] = None,  # TODO: fix
     ):
         super().__init__()
         self.save_hyperparameters(logger=False)

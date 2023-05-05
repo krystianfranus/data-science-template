@@ -19,11 +19,13 @@ optimizer = HyperParameterOptimizer(
         # DiscreteParameterRange("Hydra/model.n_factors", values=[8, 16]),
         # DiscreteParameterRange("Hydra/model.n_layers", values=[3, 4]),
         DiscreteParameterRange("Hydra/model.dropout", values=[0.0, 0.5]),
-        DiscreteParameterRange("Hydra/model.lr1", values=[0.00001, 0.0001, 0.001]),
         DiscreteParameterRange(
-            "Hydra/model.lr2", values=[0.00005, 0.0001, 0.0005, 0.001]
+            "Hydra/model.lr1", values=[0.000005, 0.00001, 0.00005, 0.0001]
         ),
-        DiscreteParameterRange("Hydra/model.weight_decay", values=[0.005, 0.01, 0.05]),
+        DiscreteParameterRange(
+            "Hydra/model.lr2", values=[0.000005, 0.00001, 0.00005, 0.0001]
+        ),
+        DiscreteParameterRange("Hydra/model.weight_decay", values=[0.01, 0.05, 0.1]),
         DiscreteParameterRange("Hydra/trainer.max_epochs", values=[100]),
     ],
     objective_metric_title="val",

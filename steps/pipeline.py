@@ -12,9 +12,9 @@ def main():
     )
 
     pipe.add_step(
-        name="Training",
+        name="Baseline",
         base_task_project="MyProject",
-        base_task_name="Training",
+        base_task_name="Baseline",
         cache_executed_step=True,
         parents=["Preprocessing"],
         parameter_override={
@@ -26,14 +26,23 @@ def main():
     )
 
     pipe.add_step(
+        name="Training",
+        base_task_project="MyProject",
+        base_task_name="Training",
+        cache_executed_step=True,
+        parents=["Preprocessing"],
+        parameter_override={
+            "Hydra/prev_task_id": "${Preprocessing.id}"
+        },  # It is preferable
+    )
+
+    pipe.add_step(
         name="Inference",
         base_task_project="MyProject",
         base_task_name="Inference",
         cache_executed_step=True,
         parents=["Training"],
-        parameter_override={
-            "Hydra/prev_task_id": "${Training.id}"
-        },
+        parameter_override={"Hydra/prev_task_id": "${Training.id}"},
     )
 
     # for debugging purposes use local jobs

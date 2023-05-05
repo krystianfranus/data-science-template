@@ -52,7 +52,8 @@ def main(cfg: DictConfig):
     log.info("Model instantiating")
     n_users = int(task_prev.get_parameter("General/n_users"))
     n_items = int(task_prev.get_parameter("General/n_items"))
-    net_params = {"n_users": n_users, "n_items": n_items}
+    pos_weight = torch.tensor([len(train_data) / train_data["target"].sum()])
+    net_params = {"n_users": n_users, "n_items": n_items, "pos_weight": pos_weight}
     task.connect(net_params)
     model = hydra.utils.instantiate(cfg.model, **net_params)
 
