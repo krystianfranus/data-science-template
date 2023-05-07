@@ -50,12 +50,13 @@ def main(cfg: DictConfig):
     datamodule = hydra.utils.instantiate(cfg.datamodule, **datamodule_params)
 
     log.info("Model instantiating")
-    n_users = int(task_prev.get_parameter("General/n_users"))
-    n_items = int(task_prev.get_parameter("General/n_items"))
-    pos_weight = torch.tensor([len(train_data) / train_data["target"].sum()])
-    net_params = {"n_users": n_users, "n_items": n_items, "pos_weight": pos_weight}
-    task.connect(net_params)
-    model = hydra.utils.instantiate(cfg.model, **net_params)
+    params = {}
+    for k, v in task_prev.get_parameters().items():
+        if "General" in k:
+            new_k = k.replace("General/", "")
+            params[new_k] = int(v)
+    model = hydra.utils.instantiate(cfg.model, **params)
+    task.connect(params)
 
     log.info("Callbacks instantiating")
     callbacks = []

@@ -3,13 +3,14 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from clearml import Task
 
 
 class ContentWise:
     def __init__(self, data_type: str) -> None:
         self.data_type = data_type
         self.train_data, self.val_data, self.test_data = None, None, None
-        self.n_users, self.n_items = None, None
+        self.params = {}
 
         # prefix = "s3://kf-north-bucket/data-science-template/data/contentwise/CW10M"
         prefix = Path("data/contentwise/data/contentwise/CW10M/")
@@ -32,6 +33,12 @@ class ContentWise:
             case _:
                 raise ValueError(f"Invalid data type, you provided '{self.data_type}'")
 
+    def save_data(self, task: Task) -> None:
+        task.connect(self.params)
+        task.upload_artifact("train_data", self.train_data, extension_name=".parquet")
+        task.upload_artifact("val_data", self.val_data, extension_name=".parquet")
+        task.upload_artifact("test_data", self.test_data, extension_name=".parquet")
+
     def _prepare_simple(self) -> None:
         interactions = self._common()
 
@@ -46,13 +53,15 @@ class ContentWise:
         # Prepare user/item to idx mappers based on train data
         unique_users = self.train_data["user"].unique()
         unique_items = self.train_data["item"].unique()
-        self.n_users = unique_users.size
-        self.n_items = unique_items.size
+        self.params["n_users"] = unique_users.size
+        self.params["n_items"] = unique_items.size
+        self.params["n_clicks"] = int(self.train_data["target"].sum())
+        self.params["n_impressions"] = len(self.train_data) - self.params["n_clicks"]
         train_user_to_idx = pd.DataFrame(
-            {"user": unique_users, "user_idx": np.arange(self.n_users)}
+            {"user": unique_users, "user_idx": np.arange(self.params["n_users"])}
         )
         train_item_to_idx = pd.DataFrame(
-            {"item": unique_items, "item_idx": np.arange(self.n_items)}
+            {"item": unique_items, "item_idx": np.arange(self.params["n_items"])}
         )
 
         # Map user/item to idx
@@ -101,13 +110,13 @@ class ContentWise:
         item_neg_set = set(self.train_data["item_neg"])
         item_pos_set = set(self.train_data["item_pos"])
         unique_items = pd.Series(list(item_neg_set | item_pos_set)).unique()
-        self.n_users = unique_users.size
-        self.n_items = unique_items.size
+        self.params["n_users"] = unique_users.size
+        self.params["n_items"] = unique_items.size
         train_user_to_idx = pd.DataFrame(
-            {"user": unique_users, "user_idx": np.arange(self.n_users)}
+            {"user": unique_users, "user_idx": np.arange(self.params["n_users"])}
         )
         train_item_to_idx = pd.DataFrame(
-            {"item": unique_items, "item_idx": np.arange(self.n_items)}
+            {"item": unique_items, "item_idx": np.arange(self.params["n_items"])}
         )
 
         # Map user/item to idx and handle column names conflicts

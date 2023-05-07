@@ -62,11 +62,29 @@ def main(cfg: DictConfig):
     baseline.loc["Popularity-based model", "value"] = pop_ndcg
     baseline.loc["Best model", "value"] = best_ndcg
 
+    # Log NDCG
     Logger.current_logger().report_table(
         "Baselines of validation data",
         "NDCG",
         iteration=0,
         table_plot=baseline,
+    )
+
+    # Log items popularity
+    tmp = n_clicks_per_item.sort_values("popularity", ascending=False).reset_index(
+        drop=True
+    )
+    Logger.current_logger().report_table(
+        "Items popularity (based on clicks)",
+        "Bottom 10",
+        iteration=0,
+        table_plot=tmp[-10:],
+    )
+    Logger.current_logger().report_table(
+        "Items popularity (based on clicks)",
+        "Top 10",
+        iteration=0,
+        table_plot=tmp[:10],
     )
 
     log.info("Done!")

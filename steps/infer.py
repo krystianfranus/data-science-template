@@ -2,8 +2,9 @@ import logging
 import os
 
 import hydra
+import pandas as pd
 import torch
-from clearml import Task, TaskTypes
+from clearml import Logger, Task, TaskTypes
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader, Dataset
 
@@ -77,15 +78,24 @@ def main(cfg: DictConfig):
     model.eval()
     device = torch.device("cuda:0")
     big_scores = torch.empty((n_users, n_items))
-    k = 0
     with torch.no_grad():
-        for users, items in dataloader:
+        for i, (users, items) in enumerate(dataloader):
             users = users.to(device)
             items = items.to(device)
             scores = model.predict(users, items)
-            big_scores[k, :] = scores.cpu()
-            k += 1
-    log.info(f"Some results: {big_scores.shape}")
+            big_scores[i, :] = scores.cpu()
+
+    # Log top10 recommendations
+    tmp = pd.DataFrame(
+        big_scores.sort(descending=True)[1][:20, :10],
+        columns=[f"top{i} item" for i in range(1, 11)],
+    )
+    Logger.current_logger().report_table(
+        "Recommendations for first 20 users",
+        "Top 10",
+        iteration=0,
+        table_plot=tmp,
+    )
 
     # log.info("[My Logger] Instantiating trainer")
     # trainer = pl.Trainer(
@@ -101,7 +111,7 @@ def main(cfg: DictConfig):
     # mean_predictions = torch.mean(torch.concat(predictions))
     # log.info(f"[My Logger] Results - Mean predictions: {mean_predictions}")
 
-    log.info("[My Logger] Done!")
+    log.info("Done!")
 
 
 if __name__ == "__main__":

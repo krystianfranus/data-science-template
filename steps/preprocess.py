@@ -36,10 +36,7 @@ def main(cfg: DictConfig):
     data.prepare_data()
 
     log.info("Data saving")
-    task.connect({"n_users": data.n_users, "n_items": data.n_items})
-    task.upload_artifact("train_data", data.train_data, extension_name=".parquet")
-    task.upload_artifact("val_data", data.val_data, extension_name=".parquet")
-    task.upload_artifact("test_data", data.test_data, extension_name=".parquet")
+    data.save_data(task)
 
     log.info("Done!")
 

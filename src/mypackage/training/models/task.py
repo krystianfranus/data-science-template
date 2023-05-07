@@ -1,8 +1,8 @@
-from typing import Any, Optional
+from typing import Any
 
 import lightning.pytorch as pl
 import torch
-from torch import Tensor, nn, optim
+from torch import nn, optim
 from torchmetrics.retrieval import RetrievalNormalizedDCG
 
 from mypackage.training.models.net import MF, MLP
@@ -15,11 +15,12 @@ class SimpleMFTask(pl.LightningModule):
         n_items: int,
         embed_size: int,
         lr: float,
-        pos_weight: Optional[Tensor] = None,
+        **kwargs,
     ):
         super().__init__()
         self.save_hyperparameters(logger=False)
         self.net = MF(n_users, n_items, embed_size)
+        pos_weight = torch.tensor([kwargs["n_impressions"] / kwargs["n_clicks"]])
         self.criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
         self.val_ndcg = RetrievalNormalizedDCG()
         self.val_step_outputs = []
@@ -84,11 +85,12 @@ class SimpleMLPTask(pl.LightningModule):
         lr1: float,
         lr2: float,
         weight_decay: float,
-        pos_weight: Optional[Tensor] = None,
+        **kwargs,
     ):
         super().__init__()
         self.save_hyperparameters(logger=False)
         self.net = MLP(n_users, n_items, n_factors, n_layers, dropout)
+        pos_weight = torch.tensor([kwargs["n_impressions"] / kwargs["n_clicks"]])
         self.criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
         self.val_ndcg = RetrievalNormalizedDCG()
         self.val_step_outputs = []
@@ -176,7 +178,7 @@ class BPRMFTask(pl.LightningModule):
         n_items: int,
         embed_size: int,
         lr: float,
-        pos_weight: Optional[Tensor] = None,  # TODO: fix
+        **kwargs,
     ):
         super().__init__()
         self.save_hyperparameters(logger=False)
@@ -188,6 +190,9 @@ class BPRMFTask(pl.LightningModule):
 
     def forward(self, users: torch.Tensor, items: torch.Tensor):
         return self.net(users, items)
+
+    def predict(self, users: torch.Tensor, items: torch.Tensor):
+        return torch.sigmoid(self.net(users, items))
 
     def training_step(self, batch, batch_idx):
         users, items_neg, items_pos = batch
@@ -242,7 +247,7 @@ class BPRMLPTask(pl.LightningModule):
         lr1: float,
         lr2: float,
         weight_decay: float,
-        pos_weight: Optional[Tensor] = None,  # TODO: fix
+        **kwargs,
     ):
         super().__init__()
         self.save_hyperparameters(logger=False)
@@ -255,6 +260,9 @@ class BPRMLPTask(pl.LightningModule):
 
     def forward(self, users: torch.Tensor, items: torch.Tensor):
         return self.net(users, items)
+
+    def predict(self, users: torch.Tensor, items: torch.Tensor):
+        return torch.sigmoid(self.net(users, items))
 
     def training_step(self, batch, batch_idx):
         optimizer1, optimizer2 = self.optimizers()
