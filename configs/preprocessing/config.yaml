@@ -7,6 +7,6 @@ hydra:
   run:
     dir: .
 
-data_type: ???
+type: ???  # simple, bpr
 use_remote_storage: false
 draft_mode: false

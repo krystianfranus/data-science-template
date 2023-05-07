@@ -5,7 +5,7 @@ import hydra
 from clearml import Task, TaskTypes
 from omegaconf import DictConfig
 
-from mypackage.preprocessing.preprocessing import ContentWise
+from mypackage.preprocessing.preprocessing import process_data
 
 log = logging.getLogger(__name__)
 
@@ -29,15 +29,7 @@ def main(cfg: DictConfig):
     if cfg.draft_mode:
         task.execute_remotely()
 
-    log.info("Data loading")
-    data = ContentWise(cfg.data_type)
-
-    log.info("Data parsing")
-    data.prepare_data()
-
-    log.info("Data saving")
-    data.save_data(task)
-
+    process_data(cfg.type, task)
     log.info("Done!")
 
 

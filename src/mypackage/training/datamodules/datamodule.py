@@ -1,7 +1,7 @@
 from typing import Optional
 
 import lightning.pytorch as pl
-import pandas as pd
+from pandas import DataFrame
 from torch.utils.data import DataLoader, Dataset
 
 from mypackage.training.datamodules.dataset import BPRDataset, TrainDataset
@@ -12,9 +12,9 @@ from mypackage.training.datamodules.dataset import BPRDataset, TrainDataset
 class SimpleDataModule(pl.LightningDataModule):
     def __init__(
         self,
-        train_data: pd.DataFrame,
-        val_data: pd.DataFrame,
-        test_data: pd.DataFrame,
+        train: DataFrame,
+        val: DataFrame,
+        test: DataFrame,
         batch_size: int = 1024,
         num_workers: int = 0,
         pin_memory: bool = False,
@@ -27,14 +27,14 @@ class SimpleDataModule(pl.LightningDataModule):
 
     def setup(self, stage: Optional[str] = None):
         if stage == "fit":
-            self.train_dataset = TrainDataset(self.hparams.train_data)
-            self.val_dataset = TrainDataset(self.hparams.val_data)
-            # self.train_dataset = CustomIterableDataset(self.hparams.train_data)
-            # self.val_dataset = CustomIterableDataset(self.hparams.val_data)
+            self.train_dataset = TrainDataset(self.hparams.train)
+            self.val_dataset = TrainDataset(self.hparams.val)
+            # self.train_dataset = CustomIterableDataset(self.hparams.train)
+            # self.val_dataset = CustomIterableDataset(self.hparams.val)
 
         if stage == "test":
-            self.test_dataset = TrainDataset(self.hparams.test_data)
-            # self.test_dataset = CustomIterableDataset(self.hparams.test_data)
+            self.test_dataset = TrainDataset(self.hparams.test)
+            # self.test_dataset = CustomIterableDataset(self.hparams.test)
 
     def train_dataloader(self):
         return DataLoader(
@@ -67,9 +67,9 @@ class SimpleDataModule(pl.LightningDataModule):
 class BPRDataModule(pl.LightningDataModule):
     def __init__(
         self,
-        train_data: pd.DataFrame,
-        val_data: pd.DataFrame,
-        test_data: pd.DataFrame,
+        train: DataFrame,
+        val: DataFrame,
+        test: DataFrame,
         batch_size: int = 1024,
         num_workers: int = 0,
         pin_memory: bool = False,
@@ -82,11 +82,11 @@ class BPRDataModule(pl.LightningDataModule):
 
     def setup(self, stage: Optional[str] = None):
         if stage == "fit":
-            self.train_dataset = BPRDataset(self.hparams.train_data)
-            self.val_dataset = TrainDataset(self.hparams.val_data)
+            self.train_dataset = BPRDataset(self.hparams.train)
+            self.val_dataset = TrainDataset(self.hparams.val)
 
         if stage == "test":
-            self.test_dataset = TrainDataset(self.hparams.test_data)
+            self.test_dataset = TrainDataset(self.hparams.test)
 
     def train_dataloader(self):
         return DataLoader(

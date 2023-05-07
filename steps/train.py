@@ -34,18 +34,18 @@ def main(cfg: DictConfig):
     else:
         task_prev = Task.get_task(project_name="MyProject", task_name="Preprocessing")
 
-    train_data = task_prev.artifacts["train_data"].get()
-    val_data = task_prev.artifacts["val_data"].get()
-    test_data = task_prev.artifacts["test_data"].get()
+    train = task_prev.artifacts["train"].get()
+    val = task_prev.artifacts["val"].get()
+    test = task_prev.artifacts["test"].get()
 
     if cfg.draft_mode:
         task.execute_remotely()
 
     log.info("Datamodule Instantiating")
     datamodule_params = {
-        "train_data": train_data,
-        "val_data": val_data,
-        "test_data": test_data,
+        "train": train,
+        "val": val,
+        "test": test,
     }
     datamodule = hydra.utils.instantiate(cfg.datamodule, **datamodule_params)
 
