@@ -22,10 +22,10 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           pip install .
       - name: Run black
-        run: black . --check --verbose
+        run: black . --check
       - name: Run flake8
-        run: flake8 . --verbose
+        run: flake8 .
       - name: Run isort
-        run: isort . --check --verbose
+        run: isort . --check
       - name: Test with pytest
         run: pytest --cov=src tests/

@@ -28,10 +28,10 @@ def main(cfg: DictConfig):
         task_prev = Task.get_task(task_id=cfg.prev_task_id)
     else:
         task_prev = Task.get_task(project_name="MyProject", task_name="Preprocessing")
-
     train = task_prev.artifacts["train"].get()
     val = task_prev.artifacts["val"].get()
 
+    log.info("Baseline computing")
     compute_baseline(train, val, cfg.type)
     log.info("Done!")
 

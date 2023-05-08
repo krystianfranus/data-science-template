@@ -19,8 +19,6 @@ def main(cfg: DictConfig):
         output_uri = "s3://kf-north-bucket/data-science-template/output/"
     else:
         output_uri = None
-
-    log.info("Data loading")
     task = Task.init(
         project_name="MyProject",
         task_name="Training",
@@ -33,20 +31,14 @@ def main(cfg: DictConfig):
         task_prev = Task.get_task(task_id=cfg.prev_task_id)
     else:
         task_prev = Task.get_task(project_name="MyProject", task_name="Preprocessing")
-
     train = task_prev.artifacts["train"].get()
     val = task_prev.artifacts["val"].get()
     test = task_prev.artifacts["test"].get()
+    # if cfg.draft_mode:
+    #     task.execute_remotely()
 
-    if cfg.draft_mode:
-        task.execute_remotely()
-
-    log.info("Datamodule Instantiating")
-    datamodule_params = {
-        "train": train,
-        "val": val,
-        "test": test,
-    }
+    log.info("Datamodule instantiating")
+    datamodule_params = {"train": train, "val": val, "test": test}
     datamodule = hydra.utils.instantiate(cfg.datamodule, **datamodule_params)
 
     log.info("Model instantiating")
