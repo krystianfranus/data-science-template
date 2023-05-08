@@ -2,11 +2,10 @@ import logging
 import os
 
 import hydra
-import pandas as pd
-import torch
-from clearml import Logger, Task, TaskTypes
+from clearml import Task, TaskTypes
 from omegaconf import DictConfig
-from torchmetrics import RetrievalNormalizedDCG
+
+from mypackage.baseline.baseline import compute_baseline
 
 log = logging.getLogger(__name__)
 
@@ -30,63 +29,10 @@ def main(cfg: DictConfig):
     else:
         task_prev = Task.get_task(project_name="MyProject", task_name="Preprocessing")
 
-    log.info("Data loading")
     train = task_prev.artifacts["train"].get()
     val = task_prev.artifacts["val"].get()
-    n_clicks_per_item = (
-        train.groupby("item")
-        .agg({"target": "sum"})
-        .rename(columns={"target": "popularity"})
-        .reset_index()
-    )
-    val = val.merge(n_clicks_per_item, "inner", "item")
 
-    log.info("NDCG computing")
-    ndcg = RetrievalNormalizedDCG()
-
-    indexes = torch.tensor(val["user"])
-    target = torch.tensor(val["target"])
-    worst_preds = torch.tensor((val["target"] + 1) % 2, dtype=torch.float32)
-    random_preds = torch.rand(val.shape[0])
-    top_preds = torch.tensor(val["popularity"], dtype=torch.float32)
-    best_preds = torch.tensor(val["target"], dtype=torch.float32)
-
-    worst_ndcg = ndcg(worst_preds, target, indexes=indexes).item()
-    random_ndcg = ndcg(random_preds, target, indexes=indexes).item()
-    pop_ndcg = ndcg(top_preds, target, indexes=indexes).item()
-    best_ndcg = ndcg(best_preds, target, indexes=indexes).item()
-
-    baseline = pd.DataFrame()
-    baseline.loc["Worst model", "value"] = worst_ndcg
-    baseline.loc["Random model", "value"] = random_ndcg
-    baseline.loc["Popularity-based model", "value"] = pop_ndcg
-    baseline.loc["Best model", "value"] = best_ndcg
-
-    # Log NDCG
-    Logger.current_logger().report_table(
-        "Baselines of validation data",
-        "NDCG",
-        iteration=0,
-        table_plot=baseline,
-    )
-
-    # Log items popularity
-    tmp = n_clicks_per_item.sort_values("popularity", ascending=False).reset_index(
-        drop=True
-    )
-    Logger.current_logger().report_table(
-        "Items popularity (based on clicks)",
-        "Bottom 10",
-        iteration=0,
-        table_plot=tmp[-10:],
-    )
-    Logger.current_logger().report_table(
-        "Items popularity (based on clicks)",
-        "Top 10",
-        iteration=0,
-        table_plot=tmp[:10],
-    )
-
+    compute_baseline(train, val, cfg.type)
     log.info("Done!")
 
 

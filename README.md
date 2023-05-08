@@ -27,7 +27,7 @@ pip install .  # Add flag -e to install in editable mode
 
 ```shell
 python steps/preprocess.py type=simple
-python steps/compute_baseline.py
+python steps/compute_baseline.py type=simple
 python steps/train.py experiment=simple_mlp
 python steps/infer.py model_type=simple_mlp
 ```
