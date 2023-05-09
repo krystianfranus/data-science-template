@@ -10,5 +10,5 @@ hydra:
 model_type: ???  # simple_mlp, simple_mf, bpr_mlp, bpr_mf
 execute_remotely: false
 prev_task_id: null
-num_workers: 0
-pin_memory: false
+num_workers: 8
+pin_memory: true

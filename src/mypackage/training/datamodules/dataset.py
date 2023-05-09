@@ -14,7 +14,7 @@ class TrainDataset(Dataset):
     def __len__(self):
         return len(self.users)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int):
         return self.users[idx], self.items[idx], self.targets[idx]
 
 
@@ -51,5 +51,19 @@ class BPRDataset(Dataset):
     def __len__(self):
         return len(self.users)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int):
         return self.users[idx], self.items_neg[idx], self.items_pos[idx]
+
+
+class InferDataset(Dataset):
+    def __init__(self, n_users: int, n_items: int):
+        self.n_users = n_users
+        self.n_items = n_items
+
+    def __len__(self):
+        return self.n_users * self.n_items
+
+    def __getitem__(self, idx: int):
+        user = idx // self.n_users
+        item = idx % self.n_items
+        return user, item

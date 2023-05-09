@@ -5,9 +5,11 @@ import hydra
 import pandas as pd
 import torch
 from clearml import Logger, Task, TaskTypes
+from lightning.pytorch import Trainer
 from omegaconf import DictConfig
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 
+from mypackage.training.datamodules.dataset import InferDataset
 from mypackage.training.models.task import (
     BPRMFTask,
     BPRMLPTask,
@@ -39,10 +41,7 @@ def main(cfg: DictConfig):
         task_prev = Task.get_task(task_id=cfg.prev_task_id)
     else:
         task_prev = Task.get_task(project_name="MyProject", task_name="Training")
-    n_users = int(task_prev.get_parameter("General/n_users"))
-    n_items = int(task_prev.get_parameter("General/n_items"))
 
-    log.info("Instantiating model")
     ckpt_path = task_prev.models["input"][-1].get_local_copy()
     match cfg.model_type:
         case "simple_mlp":
@@ -56,60 +55,29 @@ def main(cfg: DictConfig):
         case _:
             raise ValueError(f"Invalid model type, you provided '{cfg.model_type}'")
 
-    log.info("Preparing dataloader")
+    n_users = model.net.embed_user.num_embeddings
+    n_items = model.net.embed_item.num_embeddings
+    dataset = InferDataset(n_users, n_items)
+    dataloader = DataLoader(
+        dataset,
+        batch_size=n_items,
+        num_workers=cfg.num_workers,
+        pin_memory=cfg.pin_memory,
+    )
 
-    class TmpDataset(Dataset):
-        def __init__(self, n_users, n_items):
-            self.n_users = n_users
-            self.n_items = n_items
+    predictions = Trainer().predict(model, dataloaders=dataloader)
+    predictions = torch.concat(predictions).view(n_users, n_items)
 
-        def __len__(self):
-            return self.n_users * self.n_items
-
-        def __getitem__(self, idx):
-            user = idx // self.n_users
-            item = idx % self.n_items
-            return user, item
-
-    dataset = TmpDataset(n_users, n_items)
-    dataloader = DataLoader(dataset, batch_size=n_items, num_workers=8, pin_memory=True)
-
-    log.info("Main loop")
-    model.eval()
-    device = torch.device("cuda:0")
-    big_scores = torch.empty((n_users, n_items))
-    with torch.no_grad():
-        for i, (users, items) in enumerate(dataloader):
-            users = users.to(device)
-            items = items.to(device)
-            scores = model.predict(users, items)
-            big_scores[i, :] = scores.cpu()
-
-    # Log top10 recommendations
-    tmp = pd.DataFrame(
-        big_scores.sort(descending=True)[1][:20, :10],
+    recs = pd.DataFrame(
+        predictions.sort(descending=True)[1][:20, :10],
         columns=[f"top{i} item" for i in range(1, 11)],
     )
     Logger.current_logger().report_table(
         "Recommendations for first 20 users",
-        "Top 10",
+        "Top 10 items",
         iteration=0,
-        table_plot=tmp,
+        table_plot=recs,
     )
-
-    # log.info("[My Logger] Instantiating trainer")
-    # trainer = pl.Trainer(
-    #     logger=False,
-    #     enable_checkpointing=False,
-    #     accelerator="gpu",
-    #     devices=1,
-    #     max_epochs=5,
-    #     log_every_n_steps=5,
-    # )
-    # log.info("[My Logger] Inferring")
-    # predictions = trainer.predict(model, dataloader, ckpt_path=ckpt_path)
-    # mean_predictions = torch.mean(torch.concat(predictions))
-    # log.info(f"[My Logger] Results - Mean predictions: {mean_predictions}")
 
     log.info("Done!")
 

@@ -29,11 +29,15 @@ class SimpleMFTask(pl.LightningModule):
         return self.net(users, items)
 
     def predict(self, users: torch.Tensor, items: torch.Tensor):
-        return torch.sigmoid(self.net(users, items))
+        return torch.sigmoid(self(users, items))
+
+    def predict_step(self, batch, batch_idx):
+        users, items = batch
+        return self.predict(users, items)
 
     def step(self, batch):
         users, items, targets_true = batch
-        targets_pred = self.forward(users, items)
+        targets_pred = self.net(users, items)
         loss = self.criterion(targets_pred, targets_true)
         return loss, targets_true, targets_pred, users
 
@@ -100,11 +104,15 @@ class SimpleMLPTask(pl.LightningModule):
         return self.net(users, items)
 
     def predict(self, users: torch.Tensor, items: torch.Tensor):
-        return torch.sigmoid(self.net(users, items))
+        return torch.sigmoid(self(users, items))
+
+    def predict_step(self, batch, batch_idx):
+        users, items = batch
+        return self.predict(users, items)
 
     def step(self, batch: Any):
         users, items, targets_true = batch
-        targets_pred = self.forward(users, items)
+        targets_pred = self.net(users, items)
         loss = self.criterion(targets_pred, targets_true)
         return loss, targets_true, targets_pred, users
 
@@ -192,12 +200,16 @@ class BPRMFTask(pl.LightningModule):
         return self.net(users, items)
 
     def predict(self, users: torch.Tensor, items: torch.Tensor):
-        return torch.sigmoid(self.net(users, items))
+        return torch.sigmoid(self(users, items))
+
+    def predict_step(self, batch, batch_idx):
+        users, items = batch
+        return self.predict(users, items)
 
     def training_step(self, batch, batch_idx):
         users, items_neg, items_pos = batch
-        pred_neg = self.forward(users, items_neg)
-        pred_pos = self.forward(users, items_pos)
+        pred_neg = self.net(users, items_neg)
+        pred_pos = self.net(users, items_pos)
         loss = self.criterion(pred_pos, pred_neg)
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         if batch_idx == 0:
@@ -262,15 +274,19 @@ class BPRMLPTask(pl.LightningModule):
         return self.net(users, items)
 
     def predict(self, users: torch.Tensor, items: torch.Tensor):
-        return torch.sigmoid(self.net(users, items))
+        return torch.sigmoid(self(users, items))
+
+    def predict_step(self, batch, batch_idx):
+        users, items = batch
+        return self.predict(users, items)
 
     def training_step(self, batch, batch_idx):
         optimizer1, optimizer2 = self.optimizers()
         optimizer1.zero_grad()
         optimizer2.zero_grad()
         users, items_neg, items_pos = batch
-        pred_neg = self.forward(users, items_neg)
-        pred_pos = self.forward(users, items_pos)
+        pred_neg = self.net(users, items_neg)
+        pred_pos = self.net(users, items_pos)
         loss = self.criterion(pred_pos, pred_neg)
         self.manual_backward(loss)
         optimizer1.step()
