@@ -1,14 +1,17 @@
 from typing import Any
 
-import lightning.pytorch as pl
 import torch
-from torch import nn, optim
+from lightning.pytorch import LightningModule
+from torch import Tensor
+from torch.nn import BCEWithLogitsLoss
+from torch.optim import Adam, SparseAdam
+from torch.optim.lr_scheduler import ExponentialLR
 from torchmetrics.retrieval import RetrievalNormalizedDCG
 
 from mypackage.training.models.net import MF, MLP
 
 
-class SimpleMFTask(pl.LightningModule):
+class SimpleMFTask(LightningModule):
     def __init__(
         self,
         n_users: int,
@@ -21,14 +24,14 @@ class SimpleMFTask(pl.LightningModule):
         self.save_hyperparameters(logger=False)
         self.net = MF(n_users, n_items, embed_size)
         pos_weight = torch.tensor([kwargs["n_impressions"] / kwargs["n_clicks"]])
-        self.criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+        self.criterion = BCEWithLogitsLoss(pos_weight=pos_weight)
         self.val_ndcg = RetrievalNormalizedDCG()
         self.val_step_outputs = []
 
-    def forward(self, users: torch.Tensor, items: torch.Tensor):
+    def forward(self, users: Tensor, items: Tensor):
         return self.net(users, items)
 
-    def predict(self, users: torch.Tensor, items: torch.Tensor):
+    def predict(self, users: Tensor, items: Tensor):
         return torch.sigmoid(self(users, items))
 
     def predict_step(self, batch, batch_idx):
@@ -74,11 +77,11 @@ class SimpleMFTask(pl.LightningModule):
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):
-        optimizer = optim.SparseAdam(params=self.parameters(), lr=self.hparams.lr)
+        optimizer = SparseAdam(params=self.parameters(), lr=self.hparams.lr)
         return optimizer
 
 
-class SimpleMLPTask(pl.LightningModule):
+class SimpleMLPTask(LightningModule):
     def __init__(
         self,
         n_users: int,
@@ -95,15 +98,15 @@ class SimpleMLPTask(pl.LightningModule):
         self.save_hyperparameters(logger=False)
         self.net = MLP(n_users, n_items, n_factors, n_layers, dropout)
         pos_weight = torch.tensor([kwargs["n_impressions"] / kwargs["n_clicks"]])
-        self.criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+        self.criterion = BCEWithLogitsLoss(pos_weight=pos_weight)
         self.val_ndcg = RetrievalNormalizedDCG()
         self.val_step_outputs = []
         self.automatic_optimization = False
 
-    def forward(self, users: torch.Tensor, items: torch.Tensor):
+    def forward(self, users: Tensor, items: Tensor):
         return self.net(users, items)
 
-    def predict(self, users: torch.Tensor, items: torch.Tensor):
+    def predict(self, users: Tensor, items: Tensor):
         return torch.sigmoid(self(users, items))
 
     def predict_step(self, batch, batch_idx):
@@ -140,6 +143,10 @@ class SimpleMLPTask(pl.LightningModule):
         optimizer2.step()
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
 
+        scheduler1, scheduler2 = self.lr_schedulers()
+        scheduler1.step()
+        scheduler2.step()
+
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -157,16 +164,18 @@ class SimpleMLPTask(pl.LightningModule):
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):
-        optimizer1 = optim.SparseAdam(list(self.parameters())[:2], lr=self.hparams.lr1)
-        optimizer2 = optim.Adam(
+        optimizer1 = SparseAdam(list(self.parameters())[:2], lr=self.hparams.lr1)
+        optimizer2 = Adam(
             list(self.parameters())[2:],
             lr=self.hparams.lr2,
             weight_decay=self.hparams.weight_decay,
         )
-        return optimizer1, optimizer2
+        scheduler1 = ExponentialLR(optimizer1, gamma=1)
+        scheduler2 = ExponentialLR(optimizer2, gamma=1)
+        return [optimizer1, optimizer2], [scheduler1, scheduler2]
 
 
-def bpr_loss(positive_sim: torch.Tensor, negative_sim: torch.Tensor) -> torch.Tensor:
+def bpr_loss(positive_sim: Tensor, negative_sim: Tensor) -> Tensor:
     distance = positive_sim - negative_sim
     # Probability of ranking given parameters
     elementwise_bpr_loss = torch.log(torch.sigmoid(distance))
@@ -179,7 +188,7 @@ def bpr_loss(positive_sim: torch.Tensor, negative_sim: torch.Tensor) -> torch.Te
     return bpr_loss
 
 
-class BPRMFTask(pl.LightningModule):
+class BPRMFTask(LightningModule):
     def __init__(
         self,
         n_users: int,
@@ -196,10 +205,10 @@ class BPRMFTask(pl.LightningModule):
         self.val_ndcg = RetrievalNormalizedDCG()
         self.val_step_outputs = []
 
-    def forward(self, users: torch.Tensor, items: torch.Tensor):
+    def forward(self, users: Tensor, items: Tensor):
         return self.net(users, items)
 
-    def predict(self, users: torch.Tensor, items: torch.Tensor):
+    def predict(self, users: Tensor, items: Tensor):
         return torch.sigmoid(self(users, items))
 
     def predict_step(self, batch, batch_idx):
@@ -244,11 +253,11 @@ class BPRMFTask(pl.LightningModule):
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):
-        optimizer = optim.SparseAdam(params=self.parameters(), lr=self.hparams.lr)
+        optimizer = SparseAdam(params=self.parameters(), lr=self.hparams.lr)
         return optimizer
 
 
-class BPRMLPTask(pl.LightningModule):
+class BPRMLPTask(LightningModule):
     def __init__(
         self,
         n_users: int,
@@ -270,10 +279,10 @@ class BPRMLPTask(pl.LightningModule):
         self.val_step_outputs = []
         self.automatic_optimization = False
 
-    def forward(self, users: torch.Tensor, items: torch.Tensor):
+    def forward(self, users: Tensor, items: Tensor):
         return self.net(users, items)
 
-    def predict(self, users: torch.Tensor, items: torch.Tensor):
+    def predict(self, users: Tensor, items: Tensor):
         return torch.sigmoid(self(users, items))
 
     def predict_step(self, batch, batch_idx):
@@ -324,8 +333,8 @@ class BPRMLPTask(pl.LightningModule):
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):
-        optimizer1 = optim.SparseAdam(list(self.parameters())[:2], lr=self.hparams.lr1)
-        optimizer2 = optim.Adam(
+        optimizer1 = SparseAdam(list(self.parameters())[:2], lr=self.hparams.lr1)
+        optimizer2 = Adam(
             list(self.parameters())[2:],
             lr=self.hparams.lr2,
             weight_decay=self.hparams.weight_decay,

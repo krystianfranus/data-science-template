@@ -11,12 +11,12 @@ app = Flask(__name__)
 def predict():
     task_prev = Task.get_task(project_name="MyProject", task_name="Training")
     ckpt_path = task_prev.models["input"][-1].get_local_copy()
-    model = SimpleMLPTask.load_from_checkpoint(ckpt_path).cpu()
-    model.eval()
+    model = SimpleMLPTask.load_from_checkpoint(ckpt_path, map_location="cpu")
 
     input_data = torch.tensor(request.json)
     users, items = input_data[:, 0], input_data[:, 1]
 
+    model.eval()
     with torch.no_grad():
         prediction = model.predict(users, items)
 
