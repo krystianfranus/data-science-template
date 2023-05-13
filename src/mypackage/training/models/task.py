@@ -316,6 +316,13 @@ class BPRMLPTask(LightningModule):
                 self.current_epoch,
                 bins="fd",
             )
+
+        # step every 200 batches
+        if (batch_idx + 1) % 200 == 0:
+            scheduler1, scheduler2 = self.lr_schedulers()
+            scheduler1.step()
+            scheduler2.step()
+
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -341,4 +348,6 @@ class BPRMLPTask(LightningModule):
             lr=self.hparams.lr2,
             weight_decay=self.hparams.weight_decay,
         )
-        return optimizer1, optimizer2
+        scheduler1 = ExponentialLR(optimizer1, gamma=0.99)
+        scheduler2 = ExponentialLR(optimizer2, gamma=0.99)
+        return [optimizer1, optimizer2], [scheduler1, scheduler2]
