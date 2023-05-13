@@ -5,6 +5,7 @@ defaults:
   - override /model: bpr_mf
 
 datamodule:
+  batch_size: 1024
   num_workers: 8
   pin_memory: true
 

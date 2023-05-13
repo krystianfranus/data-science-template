@@ -143,9 +143,11 @@ class SimpleMLPTask(LightningModule):
         optimizer2.step()
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
 
-        scheduler1, scheduler2 = self.lr_schedulers()
-        scheduler1.step()
-        scheduler2.step()
+        # step every 100 batches
+        if (batch_idx + 1) % 100 == 0:
+            scheduler1, scheduler2 = self.lr_schedulers()
+            scheduler1.step()
+            scheduler2.step()
 
         return loss
 
@@ -170,8 +172,8 @@ class SimpleMLPTask(LightningModule):
             lr=self.hparams.lr2,
             weight_decay=self.hparams.weight_decay,
         )
-        scheduler1 = ExponentialLR(optimizer1, gamma=1)
-        scheduler2 = ExponentialLR(optimizer2, gamma=1)
+        scheduler1 = ExponentialLR(optimizer1, gamma=0.95)
+        scheduler2 = ExponentialLR(optimizer2, gamma=0.99)
         return [optimizer1, optimizer2], [scheduler1, scheduler2]
 
 

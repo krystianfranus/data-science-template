@@ -1,5 +1,5 @@
 _target_: mypackage.training.datamodules.datamodule.SimpleDataModule
 
-batch_size: 1024
+batch_size: ???
 num_workers: 0
 pin_memory: false
