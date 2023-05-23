@@ -6,11 +6,13 @@ import torch
 from clearml import Task, TaskTypes
 from omegaconf import DictConfig
 
+from mypackage import get_project_root
+
 log = logging.getLogger(__name__)
 
 
 @hydra.main(
-    config_path=os.path.join(os.getcwd(), "configs", "training"),
+    config_path=os.path.join(get_project_root(), "configs", "training"),
     config_name="config",
     version_base=None,
 )
@@ -57,7 +59,9 @@ def main(cfg: DictConfig):
             callbacks.append(hydra.utils.instantiate(cb_cfg))
 
     log.info("Trainer instantiating")
-    trainer = hydra.utils.instantiate(cfg.trainer, callbacks=callbacks)
+    trainer = hydra.utils.instantiate(
+        cfg.trainer, callbacks=callbacks, default_root_dir=get_project_root()
+    )
 
     log.info("Training")
     trainer.fit(model=model, datamodule=datamodule)

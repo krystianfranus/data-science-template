@@ -5,13 +5,14 @@ import hydra
 from clearml import Task, TaskTypes
 from omegaconf import DictConfig
 
+from mypackage import get_project_root
 from mypackage.preprocessing.preprocessing import process_data
 
 log = logging.getLogger(__name__)
 
 
 @hydra.main(
-    config_path=os.path.join(os.getcwd(), "configs", "preprocessing"),
+    config_path=os.path.join(get_project_root(), "configs", "preprocessing"),
     config_name="config",
     version_base=None,
 )

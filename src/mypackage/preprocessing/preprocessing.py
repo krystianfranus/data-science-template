@@ -6,6 +6,8 @@ import pandas as pd
 from clearml import Task
 from pandas import DataFrame
 
+from mypackage import get_project_root
+
 
 def process_data(type: str, task: Task) -> None:
     params = {}
@@ -16,7 +18,7 @@ def process_data(type: str, task: Task) -> None:
 
 def _load_data() -> tuple[DataFrame, DataFrame]:
     # prefix = "s3://kf-north-bucket/data-science-template/data/contentwise/CW10M"
-    prefix = Path("data/contentwise/data/contentwise/CW10M/")
+    prefix = get_project_root() / Path("data/contentwise/data/contentwise/CW10M/")
     interactions_path = prefix / Path("interactions")
     impressions_dl_path = prefix / Path("impressions-direct-link")
 

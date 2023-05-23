@@ -9,6 +9,7 @@ from lightning.pytorch import Trainer
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
+from mypackage import get_project_root
 from mypackage.training.datamodules.dataset import InferDataset
 from mypackage.training.models.task import (
     BPRMFTask,
@@ -21,7 +22,7 @@ log = logging.getLogger(__name__)
 
 
 @hydra.main(
-    config_path=os.path.join(os.getcwd(), "configs", "inference"),
+    config_path=os.path.join(get_project_root(), "configs", "inference"),
     config_name="config",
     version_base=None,
 )
@@ -65,7 +66,7 @@ def main(cfg: DictConfig):
         pin_memory=cfg.pin_memory,
     )
 
-    predictions = Trainer().predict(model, dataloaders=dataloader)
+    predictions = Trainer(logger=False).predict(model, dataloaders=dataloader)
     predictions = torch.concat(predictions).view(n_users, n_items)
 
     recs = pd.DataFrame(
