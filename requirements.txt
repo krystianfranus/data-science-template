@@ -17,6 +17,7 @@ tensorboardX==2.6
 rich==13.3.5
 s3fs==0.4.2
 boto3==1.26.125
+python-dotenv==1.0.0
 
 # --------- code prettifiers --------- #
 flake8==6.0.0

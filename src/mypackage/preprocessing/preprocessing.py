@@ -1,33 +1,39 @@
 import datetime as dt
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import s3fs
 from clearml import Task
 from pandas import DataFrame
 
-from mypackage import get_project_root
 
-
-def process_data(type: str, task: Task) -> None:
+def process_data(type: str, task: Task, s3_cfg: dict) -> None:
     params = {}
-    interactions, impressions_dl = _load_data()
+    interactions, impressions_dl = _load_data(s3_cfg)
     train, val, test = _prepare_data(interactions, impressions_dl, type, params)
     _save_data(train, val, test, params, task)
 
 
-def _load_data() -> tuple[DataFrame, DataFrame]:
-    # prefix = "s3://kf-north-bucket/data-science-template/data/contentwise/CW10M"
-    prefix = get_project_root() / Path("data/contentwise/data/contentwise/CW10M/")
-    interactions_path = prefix / Path("interactions")
-    impressions_dl_path = prefix / Path("impressions-direct-link")
+def _load_data(s3_cfg: dict) -> tuple[DataFrame, DataFrame]:
+    s3 = s3fs.S3FileSystem(key=s3_cfg["key"], secret=s3_cfg["secret"])
+    bucket_name = "kf-north-bucket"
+    prefix = "data-science-template/data/contentwise/CW10M"
 
-    interactions = pd.concat(
-        pd.read_parquet(p) for p in interactions_path.glob("*.parquet")
-    ).reset_index()
-    impressions_dl = pd.concat(
-        pd.read_parquet(p) for p in impressions_dl_path.glob("*.parquet")
-    ).reset_index()
+    file_paths1 = s3.glob(f"{bucket_name}/{prefix}/interactions/*.parquet")
+    dfs = []
+    for file_path in file_paths1:
+        with s3.open(file_path, "rb") as file:
+            df = pd.read_parquet(file)
+            dfs.append(df)
+    interactions = pd.concat(dfs).reset_index()
+
+    file_paths2 = s3.glob(f"{bucket_name}/{prefix}/impressions-direct-link/*.parquet")
+    dfs = []
+    for file_path in file_paths2:
+        with s3.open(file_path, "rb") as file:
+            df = pd.read_parquet(file)
+            dfs.append(df)
+    impressions_dl = pd.concat(dfs).reset_index()
 
     return interactions, impressions_dl
 

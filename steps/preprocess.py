@@ -3,10 +3,14 @@ import os
 
 import hydra
 from clearml import Task, TaskTypes
+from dotenv import load_dotenv
 from omegaconf import DictConfig
 
 from mypackage import get_project_root
 from mypackage.preprocessing.preprocessing import process_data
+
+# Load variables from .env file
+load_dotenv()
 
 log = logging.getLogger(__name__)
 
@@ -21,6 +25,10 @@ def main(cfg: DictConfig):
     if cfg.use_remote_storage:
         output_uri = "s3://kf-north-bucket/data-science-template/output/"
 
+    key = os.getenv("AWS_ACCESS_KEY_ID")
+    secret = os.getenv("AWS_SECRET_ACCESS_KEY")
+    s3_cfg = {"key": key, "secret": secret}
+
     task = Task.init(
         project_name="MyProject",
         task_name="Preprocessing",
@@ -32,7 +40,7 @@ def main(cfg: DictConfig):
     #     task.execute_remotely()
 
     log.info("Data preprocessing")
-    process_data(cfg.type, task)
+    process_data(cfg.type, task, s3_cfg)
     log.info("Done!")
 
 
