@@ -1,9 +1,11 @@
 import torch
 from clearml import Task
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 
 from mypackage.training.models.task import SimpleMLPTask
 
+load_dotenv()
 app = Flask(__name__)
 
 

@@ -3,11 +3,13 @@ import os
 
 import hydra
 from clearml import Task, TaskTypes
+from dotenv import load_dotenv
 from omegaconf import DictConfig
 
 from mypackage import get_project_root
 from mypackage.baseline.baseline import compute_baseline
 
+load_dotenv()
 log = logging.getLogger(__name__)
 
 

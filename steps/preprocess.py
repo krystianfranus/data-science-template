@@ -9,9 +9,7 @@ from omegaconf import DictConfig
 from mypackage import get_project_root
 from mypackage.preprocessing.preprocessing import process_data
 
-# Load variables from .env file
 load_dotenv()
-
 log = logging.getLogger(__name__)
 
 

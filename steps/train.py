@@ -4,10 +4,12 @@ import os
 import hydra
 import torch
 from clearml import Task, TaskTypes
+from dotenv import load_dotenv
 from omegaconf import DictConfig
 
 from mypackage import get_project_root
 
+load_dotenv()
 log = logging.getLogger(__name__)
 
 

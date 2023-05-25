@@ -1,4 +1,7 @@
 from clearml.automation import PipelineController
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def main():

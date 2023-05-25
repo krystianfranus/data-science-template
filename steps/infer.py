@@ -5,6 +5,7 @@ import hydra
 import pandas as pd
 import torch
 from clearml import Logger, Task, TaskTypes
+from dotenv import load_dotenv
 from lightning.pytorch import Trainer
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
@@ -18,6 +19,7 @@ from mypackage.training.models.task import (
     SimpleMLPTask,
 )
 
+load_dotenv()
 log = logging.getLogger(__name__)
 
 
