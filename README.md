@@ -6,6 +6,11 @@
 
 ## Installation
 
+Export environment variables from .env:
+```
+export $(cat .env | xargs)
+```
+
 Using docker compose (recommended):
 ```shell
 docker compose up -d  # Run container based on docker-compose.yml
