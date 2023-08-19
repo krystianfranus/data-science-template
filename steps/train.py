@@ -31,7 +31,7 @@ def main(cfg: DictConfig):
         output_uri=output_uri,
     )
 
-    if cfg.prev_task_id is not None:
+    if cfg.prev_task_id:
         task_prev = Task.get_task(task_id=cfg.prev_task_id)
     else:
         task_prev = Task.get_task(project_name="MyProject", task_name="Preprocessing")
@@ -41,39 +41,32 @@ def main(cfg: DictConfig):
     # if cfg.draft_mode:
     #     task.execute_remotely()
 
-    log.info("Datamodule instantiating")
+    log.info("Instantiating datamodule")
     datamodule_params = {"train": train, "val": val, "test": test}
     datamodule = hydra.utils.instantiate(cfg.datamodule, **datamodule_params)
 
-    log.info("Model instantiating")
+    log.info("Instantiating model")
     params = {}
     for k, v in task_prev.get_parameters().items():
         if "General" in k:
-            new_k = k.replace("General/", "")
-            params[new_k] = int(v)
+            k = k.replace("General/", "")
+            params[k] = int(v)
     model = hydra.utils.instantiate(cfg.model, **params)
     task.connect(params)
 
-    log.info("Callbacks instantiating")
+    log.info("Instantiating callbacks")
     callbacks = []
     for _, cb_cfg in cfg.callbacks.items():
         if isinstance(cb_cfg, DictConfig) and "_target_" in cb_cfg:
             callbacks.append(hydra.utils.instantiate(cb_cfg))
 
-    log.info("Trainer instantiating")
+    log.info("Instantiating trainer")
     trainer = hydra.utils.instantiate(
         cfg.trainer, callbacks=callbacks, default_root_dir=get_project_root()
     )
 
     log.info("Training")
     trainer.fit(model=model, datamodule=datamodule)
-
-    # Temporary snippet of code - workaround for model saving into clearml env
-    best_model = model.load_from_checkpoint(trainer.callbacks[3].best_model_path)
-    torch.save(
-        best_model.state_dict(),
-        trainer.callbacks[3].best_model_path.replace("ckpt", "pt"),
-    )
 
     log.info("Done!")
 

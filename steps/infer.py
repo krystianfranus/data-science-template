@@ -45,7 +45,7 @@ def main(cfg: DictConfig):
     else:
         task_prev = Task.get_task(project_name="MyProject", task_name="Training")
 
-    ckpt_path = task_prev.models["input"][-1].get_local_copy()
+    ckpt_path = task_prev.models["output"][-1].get_local_copy()
     match cfg.model_type:
         case "simple_mlp":
             model = SimpleMLPTask.load_from_checkpoint(ckpt_path)
