@@ -1,4 +1,8 @@
 import datetime as dt
+import glob
+import logging
+import os
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -6,57 +10,67 @@ import s3fs
 from clearml import Task
 from pandas import DataFrame
 
+from mypackage import get_cache_path
 
-def process_data(type: str, task: Task, s3_cfg: dict) -> None:
-    params = {}
-    interactions, impressions_dl = _load_data(s3_cfg)
-    train, val, test = _prepare_data(interactions, impressions_dl, type, params)
-    _save_data(train, val, test, params, task)
+log = logging.getLogger(__name__)
 
 
-def _load_data(s3_cfg: dict) -> tuple[DataFrame, DataFrame]:
-    s3 = s3fs.S3FileSystem(key=s3_cfg["key"], secret=s3_cfg["secret"])
-    bucket_name = "kf-north-bucket"
-    prefix = "data-science-template/data/contentwise/CW10M"
+def load_data(aws_cfg: dict) -> tuple[DataFrame, DataFrame]:
+    cache = get_cache_path() / "CW10M"
+    if cache.exists():
+        paths1 = glob.glob(os.path.join(cache, "interactions", "*.parquet"))
+        interactions = pd.concat([pd.read_parquet(p) for p in paths1]).reset_index()
+        paths2 = glob.glob(os.path.join(cache, "impressions-direct-link", "*.parquet"))
+        impressions_dl = pd.concat([pd.read_parquet(p) for p in paths2]).reset_index()
+    else:
+        log.info("Data are not available locally (downloading from remote storage)")
 
-    file_paths1 = s3.glob(f"{bucket_name}/{prefix}/interactions/*.parquet")
-    dfs = []
-    for file_path in file_paths1:
-        with s3.open(file_path, "rb") as file:
-            df = pd.read_parquet(file)
-            dfs.append(df)
-    interactions = pd.concat(dfs).reset_index()
+        s3 = s3fs.S3FileSystem(key=aws_cfg["key"], secret=aws_cfg["secret"])
+        s3_prefix = "kf-north-bucket/data-science-template/data/contentwise/CW10M"
+        (cache / "interactions").mkdir(parents=True, exist_ok=False)
+        (cache / "impressions-direct-link").mkdir(parents=True, exist_ok=False)
 
-    file_paths2 = s3.glob(f"{bucket_name}/{prefix}/impressions-direct-link/*.parquet")
-    dfs = []
-    for file_path in file_paths2:
-        with s3.open(file_path, "rb") as file:
-            df = pd.read_parquet(file)
-            dfs.append(df)
-    impressions_dl = pd.concat(dfs).reset_index()
+        paths1 = s3.glob(f"{s3_prefix}/interactions/*.parquet")
+        dfs = []
+        for p in paths1:
+            with s3.open(p, "rb") as file:
+                df = pd.read_parquet(file)
+                file_name = Path(p).name
+                df.to_parquet(f"cache/CW10M/interactions/{file_name}")
+                dfs.append(df)
+        interactions = pd.concat(dfs).reset_index()
+
+        paths2 = s3.glob(f"{s3_prefix}/impressions-direct-link/*.parquet")
+        dfs = []
+        for p in paths2:
+            with s3.open(p, "rb") as file:
+                df = pd.read_parquet(file)
+                file_name = Path(p).name
+                df.to_parquet(f"cache/CW10M/impressions-direct-link//{file_name}")
+                dfs.append(df)
+        impressions_dl = pd.concat(dfs).reset_index()
 
     return interactions, impressions_dl
 
 
-def _prepare_data(
+def prepare_data(
     interactions: DataFrame,
     impressions_dl: DataFrame,
     type: str,
-    params: dict,
-) -> tuple[DataFrame, DataFrame, DataFrame]:
+) -> tuple[DataFrame, DataFrame, DataFrame, dict]:
     match type:
         case "simple":
-            train, val, test = _prepare_simple(interactions, impressions_dl, params)
+            train, val, test, params = _prepare_simple(interactions, impressions_dl)
         case "bpr":
-            train, val, test = _prepare_bpr(interactions, impressions_dl, params)
+            train, val, test, params = _prepare_bpr(interactions, impressions_dl)
         case _:
             raise ValueError(f"Invalid data type, you provided '{type}'")
 
-    return train, val, test
+    return train, val, test, params
 
 
-def _save_data(
-    train: DataFrame, val: DataFrame, test: DataFrame, params: dict, task: Task
+def save_data(
+    task: Task, train: DataFrame, val: DataFrame, test: DataFrame, params: dict
 ) -> None:
     task.connect(params)
     task.upload_artifact("train", train, extension_name=".parquet")
@@ -67,8 +81,7 @@ def _save_data(
 def _prepare_simple(
     interactions: DataFrame,
     impressions_dl: DataFrame,
-    params: dict,
-) -> tuple[DataFrame, DataFrame, DataFrame]:
+) -> tuple[DataFrame, DataFrame, DataFrame, dict]:
     interactions = _common(interactions, impressions_dl)
 
     # Split data
@@ -78,6 +91,7 @@ def _prepare_simple(
     # Prepare user/item to idx mappers based on train data
     unique_users = train["user"].unique()
     unique_items = train["item"].unique()
+    params = {}
     params["n_users"] = unique_users.size
     params["n_items"] = unique_items.size
     params["n_clicks"] = int(train["target"].sum())
@@ -107,14 +121,13 @@ def _prepare_simple(
     # Mock test_data
     test = val.copy()  # test set == validation set (to change in the future!)
 
-    return train, val, test
+    return train, val, test, params
 
 
 def _prepare_bpr(
     interactions: DataFrame,
     impressions_dl: DataFrame,
-    params: dict,
-) -> tuple[DataFrame, DataFrame, DataFrame]:
+) -> tuple[DataFrame, DataFrame, DataFrame, dict]:
     interactions = _common(interactions, impressions_dl)
 
     # Split data
@@ -129,6 +142,7 @@ def _prepare_bpr(
     item_neg_set = set(train["item_neg"])
     item_pos_set = set(train["item_pos"])
     unique_items = pd.Series(list(item_neg_set | item_pos_set)).unique()
+    params = {}
     params["n_users"] = unique_users.size
     params["n_items"] = unique_items.size
     train_user_to_idx = pd.DataFrame(
@@ -165,7 +179,7 @@ def _prepare_bpr(
     # Mock test_data
     test = val.copy()  # test set == validation set (to change in the future!)
 
-    return train, val, test
+    return train, val, test, params
 
 
 def _common(interactions: DataFrame, impressions_dl: DataFrame) -> DataFrame:

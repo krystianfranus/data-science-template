@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from omegaconf import DictConfig
 
 from mypackage import get_project_root
-from mypackage.preprocessing.preprocessing import process_data
+from mypackage.preprocessing.preprocessing import load_data, prepare_data, save_data
 
 load_dotenv()
 log = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ def main(cfg: DictConfig):
 
     key = os.getenv("AWS_ACCESS_KEY_ID")
     secret = os.getenv("AWS_SECRET_ACCESS_KEY")
-    s3_cfg = {"key": key, "secret": secret}
+    aws_cfg = {"key": key, "secret": secret}
 
     task = Task.init(
         project_name="MyProject",
@@ -37,8 +37,12 @@ def main(cfg: DictConfig):
     # if cfg.draft_mode:
     #     task.execute_remotely()
 
-    log.info("Data preprocessing")
-    process_data(cfg.type, task, s3_cfg)
+    log.info("Loading raw data")
+    interactions, impressions_dl = load_data(aws_cfg)
+    log.info("Parsing")
+    train, val, test, params = prepare_data(interactions, impressions_dl, cfg.type)
+    log.info("Saving parsed data")
+    save_data(task, train, val, test, params)
     log.info("Done!")
 
 
