@@ -1,7 +1,7 @@
 import datetime as dt
-import glob
 import logging
 import os
+from glob import glob
 from pathlib import Path
 
 import numpy as np
@@ -15,28 +15,30 @@ from mypackage import get_cache_path
 log = logging.getLogger(__name__)
 
 
-def load_data(aws_cfg: dict) -> tuple[DataFrame, DataFrame]:
-    cache = get_cache_path() / "CW10M"
-    if cache.exists():
-        paths1 = glob.glob(os.path.join(cache, "interactions", "*.parquet"))
+def load_data() -> tuple[DataFrame, DataFrame]:
+    cache_dir = get_cache_path() / "CW10M"
+    if cache_dir.exists():
+        paths1 = glob(os.path.join(cache_dir, "interactions", "*.parquet"))
         interactions = pd.concat([pd.read_parquet(p) for p in paths1]).reset_index()
-        paths2 = glob.glob(os.path.join(cache, "impressions-direct-link", "*.parquet"))
+        paths2 = glob(os.path.join(cache_dir, "impressions-direct-link", "*.parquet"))
         impressions_dl = pd.concat([pd.read_parquet(p) for p in paths2]).reset_index()
     else:
         log.info("Data are not available locally (downloading from remote storage)")
 
-        s3 = s3fs.S3FileSystem(key=aws_cfg["key"], secret=aws_cfg["secret"])
+        (cache_dir / "interactions").mkdir(parents=True, exist_ok=False)
+        (cache_dir / "impressions-direct-link").mkdir(parents=True, exist_ok=False)
         s3_prefix = "kf-north-bucket/data-science-template/data/contentwise/CW10M"
-        (cache / "interactions").mkdir(parents=True, exist_ok=False)
-        (cache / "impressions-direct-link").mkdir(parents=True, exist_ok=False)
 
-        paths1 = s3.glob(f"{s3_prefix}/interactions/*.parquet")
+        key = os.getenv("AWS_ACCESS_KEY_ID")
+        secret = os.getenv("AWS_SECRET_ACCESS_KEY")
+        s3 = s3fs.S3FileSystem(key=key, secret=secret)
+
+        paths1 = s3.glob(os.path.join(s3_prefix, "interactions", "*.parquet"))
         dfs = []
         for p in paths1:
             with s3.open(p, "rb") as file:
                 df = pd.read_parquet(file)
-                file_name = Path(p).name
-                df.to_parquet(f"cache/CW10M/interactions/{file_name}")
+                df.to_parquet(f"cache/CW10M/interactions/{Path(p).name}")
                 dfs.append(df)
         interactions = pd.concat(dfs).reset_index()
 
@@ -45,8 +47,7 @@ def load_data(aws_cfg: dict) -> tuple[DataFrame, DataFrame]:
         for p in paths2:
             with s3.open(p, "rb") as file:
                 df = pd.read_parquet(file)
-                file_name = Path(p).name
-                df.to_parquet(f"cache/CW10M/impressions-direct-link//{file_name}")
+                df.to_parquet(f"cache/CW10M/impressions-direct-link/{Path(p).name}")
                 dfs.append(df)
         impressions_dl = pd.concat(dfs).reset_index()
 

@@ -18,14 +18,10 @@ log = logging.getLogger(__name__)
     config_name="config",
     version_base=None,
 )
-def main(cfg: DictConfig):
+def main(cfg: DictConfig) -> None:
     output_uri = None
     if cfg.use_remote_storage:
         output_uri = "s3://kf-north-bucket/data-science-template/output/"
-
-    key = os.getenv("AWS_ACCESS_KEY_ID")
-    secret = os.getenv("AWS_SECRET_ACCESS_KEY")
-    aws_cfg = {"key": key, "secret": secret}
 
     task = Task.init(
         project_name="MyProject",
@@ -38,11 +34,15 @@ def main(cfg: DictConfig):
     #     task.execute_remotely()
 
     log.info("Loading raw data")
-    interactions, impressions_dl = load_data(aws_cfg)
+    interactions, impressions_dl = load_data()
+
     log.info("Parsing")
     train, val, test, params = prepare_data(interactions, impressions_dl, cfg.type)
+    log.info(f"Found data properties: {params}")
+
     log.info("Saving parsed data")
     save_data(task, train, val, test, params)
+
     log.info("Done!")
 
 

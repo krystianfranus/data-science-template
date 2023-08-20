@@ -28,23 +28,22 @@ log = logging.getLogger(__name__)
     config_name="config",
     version_base=None,
 )
-def main(cfg: DictConfig):
-    task = Task.init(
+def main(cfg: DictConfig) -> None:
+    Task.init(
         project_name="MyProject",
         task_name="Inference",
         task_type=TaskTypes.inference,
         reuse_last_task_id=False,
         output_uri=None,
     )
+    # if cfg.execute_remotely:
+    #     task.execute_remotely()
 
-    if cfg.execute_remotely:
-        task.execute_remotely()
-
+    task_prev = Task.get_task(project_name="MyProject", task_name="Training")
     if cfg.prev_task_id is not None:
         task_prev = Task.get_task(task_id=cfg.prev_task_id)
-    else:
-        task_prev = Task.get_task(project_name="MyProject", task_name="Training")
 
+    log.info("Loading model")
     ckpt_path = task_prev.models["output"][-1].get_local_copy()
     match cfg.model_type:
         case "simple_mlp":
@@ -58,6 +57,7 @@ def main(cfg: DictConfig):
         case _:
             raise ValueError(f"Invalid model type, you provided '{cfg.model_type}'")
 
+    log.info("Instantiating dataloader")
     n_users = model.net.embed_user.num_embeddings
     n_items = model.net.embed_item.num_embeddings
     dataset = InferDataset(n_users, n_items)
@@ -68,6 +68,7 @@ def main(cfg: DictConfig):
         pin_memory=cfg.pin_memory,
     )
 
+    log.info("Predicting")
     predictions = Trainer(logger=False).predict(model, dataloaders=dataloader)
     predictions = torch.concat(predictions).view(n_users, n_items)
 

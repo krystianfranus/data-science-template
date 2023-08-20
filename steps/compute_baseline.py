@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
     config_name="config",
     version_base=None,
 )
-def main(cfg: DictConfig):
+def main(cfg: DictConfig) -> None:
     Task.init(
         project_name="MyProject",
         task_name="Baseline",
@@ -27,15 +27,17 @@ def main(cfg: DictConfig):
         output_uri=None,
     )
 
+    task_prev = Task.get_task(project_name="MyProject", task_name="Preprocessing")
     if cfg.prev_task_id:
         task_prev = Task.get_task(task_id=cfg.prev_task_id)
-    else:
-        task_prev = Task.get_task(project_name="MyProject", task_name="Preprocessing")
+
+    log.info("Loading data")
     train = task_prev.artifacts["train"].get()
     val = task_prev.artifacts["val"].get()
 
-    log.info("Computing baseline")
+    log.info("Computing baselines")
     compute_baseline(train, val, cfg.type)
+
     log.info("Done!")
 
 

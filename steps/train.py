@@ -2,7 +2,6 @@ import logging
 import os
 
 import hydra
-import torch
 from clearml import Task, TaskTypes
 from dotenv import load_dotenv
 from omegaconf import DictConfig
@@ -18,11 +17,11 @@ log = logging.getLogger(__name__)
     config_name="config",
     version_base=None,
 )
-def main(cfg: DictConfig):
+def main(cfg: DictConfig) -> None:
+    output_uri = None
     if cfg.use_remote_storage:
         output_uri = "s3://kf-north-bucket/data-science-template/output/"
-    else:
-        output_uri = None
+
     task = Task.init(
         project_name="MyProject",
         task_name="Training",
@@ -30,16 +29,16 @@ def main(cfg: DictConfig):
         reuse_last_task_id=False,
         output_uri=output_uri,
     )
+    # if cfg.draft_mode:
+    #     task.execute_remotely()
 
+    task_prev = Task.get_task(project_name="MyProject", task_name="Preprocessing")
     if cfg.prev_task_id:
         task_prev = Task.get_task(task_id=cfg.prev_task_id)
-    else:
-        task_prev = Task.get_task(project_name="MyProject", task_name="Preprocessing")
+
     train = task_prev.artifacts["train"].get()
     val = task_prev.artifacts["val"].get()
     test = task_prev.artifacts["test"].get()
-    # if cfg.draft_mode:
-    #     task.execute_remotely()
 
     log.info("Instantiating datamodule")
     datamodule_params = {"train": train, "val": val, "test": test}
