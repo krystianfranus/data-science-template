@@ -39,8 +39,7 @@ class MLP(nn.Module):
         embed_size = n_factors * (2 ** (n_layers - 1))
         self.embed_user = nn.Embedding(n_users, embed_size, sparse=True)
         self.embed_item = nn.Embedding(n_items, embed_size, sparse=True)
-
-        mlp_modules = []
+        mlp_modules: list[nn.Module] = []
         for i in range(n_layers):
             input_size = n_factors * (2 ** (n_layers - i))
             mlp_modules.append(nn.Dropout(p=dropout))

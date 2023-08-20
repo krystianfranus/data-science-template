@@ -26,7 +26,7 @@ class SimpleMFTask(LightningModule):
         pos_weight = torch.tensor([kwargs["n_impressions"] / kwargs["n_clicks"]])
         self.criterion = BCEWithLogitsLoss(pos_weight=pos_weight)
         self.val_ndcg = RetrievalNormalizedDCG()
-        self.val_step_outputs = []
+        self.val_step_outputs: list[tuple] = []
 
     def forward(self, users: Tensor, items: Tensor):
         return self.net(users, items)
@@ -100,7 +100,7 @@ class SimpleMLPTask(LightningModule):
         pos_weight = torch.tensor([kwargs["n_impressions"] / kwargs["n_clicks"]])
         self.criterion = BCEWithLogitsLoss(pos_weight=pos_weight)
         self.val_ndcg = RetrievalNormalizedDCG()
-        self.val_step_outputs = []
+        self.val_step_outputs: list[tuple] = []
         self.automatic_optimization = False
 
     def forward(self, users: Tensor, items: Tensor):
@@ -205,7 +205,7 @@ class BPRMFTask(LightningModule):
         # sigmoid ?
         self.criterion = bpr_loss
         self.val_ndcg = RetrievalNormalizedDCG()
-        self.val_step_outputs = []
+        self.val_step_outputs: list[tuple] = []
 
     def forward(self, users: Tensor, items: Tensor):
         return self.net(users, items)
@@ -278,7 +278,7 @@ class BPRMLPTask(LightningModule):
         # sigmoid ?
         self.criterion = bpr_loss
         self.val_ndcg = RetrievalNormalizedDCG()
-        self.val_step_outputs = []
+        self.val_step_outputs: list[tuple] = []
         self.automatic_optimization = False
 
     def forward(self, users: Tensor, items: Tensor):
