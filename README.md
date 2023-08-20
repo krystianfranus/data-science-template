@@ -1,4 +1,9 @@
-# data-science-template
+<div align="center">
+
+# 🚀⚡🔥 data-science-template 🚀⚡🔥
+
+</div>
+
 
 [![python](https://img.shields.io/badge/-Python_3.10-blue?logo=python&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![pytorch](https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org)
