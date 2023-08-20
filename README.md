@@ -4,8 +4,9 @@
 <a href="https://black.readthedocs.io/en/stable/"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-black.svg?style=for-the-badge&labelColor=gray"></a>
 
 Hi there! This is recommender system project using:
-- pytorch lighting for model training
-- clearml for ML cycle control
+- `lighting` for model training
+- `hydra` for configuration
+- `clearml` for ML cycle control
 - (optionally) aws s3 as remote storage
 
 ## Prerequisites
