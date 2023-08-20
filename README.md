@@ -2,9 +2,6 @@
 
 # 🚀⚡🔥 data-science-template 🚀⚡🔥
 
-</div>
-
-
 [![python](https://img.shields.io/badge/-Python_3.10-blue?logo=python&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![pytorch](https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org)
 [![lightning](https://img.shields.io/badge/-Lightning-792ee5?logo=pytorchlightning&logoColor=white)](https://pytorchlightning.ai)
@@ -12,6 +9,7 @@
 [![black](https://img.shields.io/badge/Code%20Style-Black-black.svg?labelColor=gray)](https://black.readthedocs.io)
 [![tests](https://github.com/krystianfranus/data-science-template/actions/workflows/workflow.yaml/badge.svg)](https://github.com/krystianfranus/data-science-template/actions/workflows/workflow.yaml)
 
+</div>
 
 Hi there! This is recommender system project using:
 - `lightning` for model training
