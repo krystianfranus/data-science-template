@@ -11,7 +11,7 @@
 
 </div>
 
-Hi there! This is recommender system project using:
+Hi there! This is recommender system project prepared for data [ContentWise Impressions](https://github.com/ContentWise/contentwise-impressions) using:
 - `lightning` for model training
 - `hydra` for configuration
 - `clearml` for ML cycle control
@@ -19,7 +19,9 @@ Hi there! This is recommender system project using:
 
 ## Prerequisites
 
-To make use of this repository, you must first set up a ClearML server and, optionally, AWS S3 storage.
+To make use of this repository, you have to:
+- [download](https://github.com/ContentWise/contentwise-impressions) ContentWise data, concretally `CW10M` directory, and place it at `cache/CW10M/` (cache directory is included in .gitignore)
+- set up a ClearML server and, optionally, AWS S3 storage
 
 ## Configuration and installation
 
