@@ -28,8 +28,7 @@ To make use of this repository, you have to:
 Prepare environment variables in .env (see .env.example):
 ```
 CLEARML_CONFIG_FILE=clearml.conf
-CLEARML_API_ACCESS_KEY=<your-clearml-api-access-key>
-CLEARML_API_SECRET_KEY=<your-clearml-api-secret-key>
+CLEARML_WEB_HOST=<your-clearml-web-host>
 ...
 ```
 
