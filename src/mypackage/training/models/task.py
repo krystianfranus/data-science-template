@@ -135,7 +135,7 @@ class SimpleMLPTask(LightningModule):
             )
 
         optimizer1, optimizer2 = self.optimizers()
-        optimizer2.zero_grad()
+        optimizer1.zero_grad()
         optimizer2.zero_grad()
         loss, *_ = self.step(batch)
         self.manual_backward(loss)
