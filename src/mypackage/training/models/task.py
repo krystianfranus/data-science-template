@@ -6,6 +6,7 @@ from torch import Tensor
 from torch.nn import BCEWithLogitsLoss
 from torch.optim import Adam, SparseAdam
 from torch.optim.lr_scheduler import ExponentialLR
+from torchmetrics.classification import BinaryAUROC
 from torchmetrics.retrieval import RetrievalNormalizedDCG
 
 from mypackage.training.models.net import MF, MLP
@@ -26,7 +27,8 @@ class SimpleMFTask(LightningModule):
         pos_weight = torch.tensor([kwargs["n_impressions"] / kwargs["n_clicks"]])
         self.criterion = BCEWithLogitsLoss(pos_weight=pos_weight)
         self.val_ndcg = RetrievalNormalizedDCG()
-        self.val_step_outputs: list[tuple] = []
+        self.val_auroc = BinaryAUROC()
+        self.val_step_outputs = []
 
     def forward(self, users: Tensor, items: Tensor):
         return self.net(users, items)
@@ -69,11 +71,12 @@ class SimpleMFTask(LightningModule):
 
     def on_validation_epoch_end(self):
         # https://github.com/Lightning-AI/lightning/pull/16520
-        targets_pred = torch.cat([tp for tp, *_ in self.val_step_outputs])
-        targets_true = torch.cat([tt for _, tt, _ in self.val_step_outputs])
-        indexes = torch.cat([u for *_, u in self.val_step_outputs])
-        self.val_ndcg(targets_pred, targets_true, indexes=indexes)
+        targets_pred, targets_true, users = map(torch.cat, zip(*self.val_step_outputs))
+
+        self.val_ndcg(targets_pred, targets_true, indexes=users)
+        self.val_auroc(targets_pred, targets_true)
         self.log("val/ndcg", self.val_ndcg, prog_bar=True)
+        self.log("val/auroc", self.val_auroc, prog_bar=True)
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):
@@ -100,7 +103,9 @@ class SimpleMLPTask(LightningModule):
         pos_weight = torch.tensor([kwargs["n_impressions"] / kwargs["n_clicks"]])
         self.criterion = BCEWithLogitsLoss(pos_weight=pos_weight)
         self.val_ndcg = RetrievalNormalizedDCG()
-        self.val_step_outputs: list[tuple] = []
+        self.val_auroc = BinaryAUROC()
+
+        self.val_step_outputs = []
         self.automatic_optimization = False
 
     def forward(self, users: Tensor, items: Tensor):
@@ -158,11 +163,11 @@ class SimpleMLPTask(LightningModule):
 
     def on_validation_epoch_end(self):
         # https://github.com/Lightning-AI/lightning/pull/16520
-        targets_pred = torch.cat([tp for tp, *_ in self.val_step_outputs])
-        targets_true = torch.cat([tt for _, tt, _ in self.val_step_outputs])
-        indexes = torch.cat([u for *_, u in self.val_step_outputs])
-        self.val_ndcg(targets_pred, targets_true, indexes=indexes)
+        targets_pred, targets_true, users = map(torch.cat, zip(*self.val_step_outputs))
+        self.val_ndcg(targets_pred, targets_true, indexes=users)
+        self.val_auroc(targets_pred, targets_true)
         self.log("val/ndcg", self.val_ndcg, prog_bar=True)
+        self.log("val/auroc", self.val_auroc, prog_bar=True)
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):
@@ -205,7 +210,8 @@ class BPRMFTask(LightningModule):
         # sigmoid ?
         self.criterion = bpr_loss
         self.val_ndcg = RetrievalNormalizedDCG()
-        self.val_step_outputs: list[tuple] = []
+        self.val_auroc = BinaryAUROC()
+        self.val_step_outputs = []
 
     def forward(self, users: Tensor, items: Tensor):
         return self.net(users, items)
@@ -247,11 +253,11 @@ class BPRMFTask(LightningModule):
 
     def on_validation_epoch_end(self):
         # https://github.com/Lightning-AI/lightning/pull/16520
-        targets_pred = torch.cat([tp for tp, *_ in self.val_step_outputs])
-        targets_true = torch.cat([tt for _, tt, _ in self.val_step_outputs])
-        indexes = torch.cat([u for *_, u in self.val_step_outputs])
-        self.val_ndcg(targets_pred, targets_true, indexes=indexes)
+        targets_pred, targets_true, users = map(torch.cat, zip(*self.val_step_outputs))
+        self.val_ndcg(targets_pred, targets_true, indexes=users)
+        self.val_auroc(targets_pred, targets_true)
         self.log("val/ndcg", self.val_ndcg, prog_bar=True)
+        self.log("val/auroc", self.val_auroc, prog_bar=True)
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):
@@ -278,7 +284,9 @@ class BPRMLPTask(LightningModule):
         # sigmoid ?
         self.criterion = bpr_loss
         self.val_ndcg = RetrievalNormalizedDCG()
-        self.val_step_outputs: list[tuple] = []
+        self.val_auroc = BinaryAUROC()
+
+        self.val_step_outputs = []
         self.automatic_optimization = False
 
     def forward(self, users: Tensor, items: Tensor):
@@ -334,11 +342,11 @@ class BPRMLPTask(LightningModule):
 
     def on_validation_epoch_end(self):
         # https://github.com/Lightning-AI/lightning/pull/16520
-        targets_pred = torch.cat([tp for tp, *_ in self.val_step_outputs])
-        targets_true = torch.cat([tt for _, tt, _ in self.val_step_outputs])
-        indexes = torch.cat([u for *_, u in self.val_step_outputs])
-        self.val_ndcg(targets_pred, targets_true, indexes=indexes)
+        targets_pred, targets_true, users = map(torch.cat, zip(*self.val_step_outputs))
+        self.val_ndcg(targets_pred, targets_true, indexes=users)
+        self.val_auroc(targets_pred, targets_true)
         self.log("val/ndcg", self.val_ndcg, prog_bar=True)
+        self.log("val/auroc", self.val_auroc, prog_bar=True)
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):
