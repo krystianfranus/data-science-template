@@ -11,3 +11,9 @@ early_stopping:
   monitor: "ndcg/val"
   mode: "max"
   patience: 20
+
+# rich_model_summary:
+#  _target_: lightning.pytorch.callbacks.RichModelSummary
+
+# rich_progress_bar:
+#  _target_: lightning.pytorch.callbacks.RichProgressBar

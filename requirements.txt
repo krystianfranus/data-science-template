@@ -19,6 +19,8 @@ rich==13.7.0
 s3fs==0.4.2
 boto3==1.26.125
 python-dotenv==1.0.0
+pre-commit==3.6.0
+torchinfo==1.8.0
 
 # ------------- styling -------------- #
 flake8==6.1.0
@@ -30,5 +32,3 @@ pyupgrade==3.15.0
 # --------------- tests -------------- #
 pytest==7.4.3
 pytest-cov==4.1.0
-
-pre-commit==3.6.0

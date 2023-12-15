@@ -4,6 +4,7 @@ import hydra
 from clearml import Task, TaskTypes
 from dotenv import load_dotenv
 from omegaconf import DictConfig
+from torchinfo import summary
 
 from mypackage import get_project_root
 
@@ -51,6 +52,7 @@ def main(cfg: DictConfig) -> None:
 
     log.info("Instantiating model")
     model = hydra.utils.instantiate(cfg.model, **stats)
+    summary(model.net)
     log.info("Instantiating model - success!")
 
     log.info("Instantiating callbacks")
@@ -61,9 +63,7 @@ def main(cfg: DictConfig) -> None:
     log.info("Instantiating callbacks - success!")
 
     log.info("Instantiating trainer")
-    trainer = hydra.utils.instantiate(
-        cfg.trainer, callbacks=callbacks, default_root_dir=get_project_root()
-    )
+    trainer = hydra.utils.instantiate(cfg.trainer, callbacks=callbacks)
     log.info("Instantiating trainer - success!")
 
     log.info("Training")
