@@ -8,3 +8,6 @@ isort .
 
 echo "Running flake8 ..."
 flake8 .
+
+echo "Running pyupgrade ..."
+pyupgrade `find . -name "*.py"`
