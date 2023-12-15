@@ -30,7 +30,7 @@ class CustomIterableDataset(IterableDataset):
         return user_id, item_id, target
 
     def __iter__(self):
-        file_itr = open(self.filename, mode="r")
+        file_itr = open(self.filename)
         mapped_itr = map(self._mapper, file_itr)
 
         worker_info = torch.utils.data.get_worker_info()
