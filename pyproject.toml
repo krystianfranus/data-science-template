@@ -24,3 +24,19 @@ classifiers = [
 
 [tool.setuptools.dynamic]
 dependencies = {file = "requirements.txt"}
+
+[tool.black]
+exclude = '''
+/(
+    notebooks
+)/
+'''
+
+[tool.flake8]
+ignore = ["E501", "W503", "E226"]
+# E501: Line too long
+# W503: Line break occurred before binary operator
+# E226: Missing white space around arithmetic operator
+
+[tool.isort]
+profile = "black"
