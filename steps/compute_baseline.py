@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 
 @hydra.main(
-    config_path=os.path.join(get_project_root(), "configs", "baseline"),
+    config_path=str(get_project_root() / "configs" / "baseline"),
     config_name="config",
     version_base=None,
 )
@@ -24,21 +24,22 @@ def main(cfg: DictConfig) -> None:
         task_name="Baseline",
         task_type=TaskTypes.custom,
         reuse_last_task_id=False,
-        output_uri=None,
     )
 
-    task_prev = Task.get_task(project_name="MyProject", task_name="Preprocessing")
-    if cfg.prev_task_id:
-        task_prev = Task.get_task(task_id=cfg.prev_task_id)
+    task_prev = Task.get_task(
+        task_id=cfg.prev_task_id,
+        project_name="MyProject",
+        task_name="Preprocessing",
+    )
 
-    log.info("Loading data")
+    log.info("Step 1 - Loading data")
     train = task_prev.artifacts["train"].get()
     val = task_prev.artifacts["val"].get()
+    log.info("Step 1 - Success!")
 
-    log.info("Computing baselines")
-    compute_baseline(train, val, cfg.type)
-
-    log.info("Done!")
+    log.info("Step 2 - Computing baselines")
+    compute_baseline(train, val, cfg.data_type)
+    log.info("Step 2 - Success!")
 
 
 if __name__ == "__main__":

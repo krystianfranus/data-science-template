@@ -1,5 +1,4 @@
 import logging
-import os
 
 import hydra
 from clearml import Task, TaskTypes
@@ -14,7 +13,7 @@ log = logging.getLogger(__name__)
 
 
 @hydra.main(
-    config_path=os.path.join(get_project_root(), "configs", "preprocessing"),
+    config_path=str(get_project_root() / "configs" / "preprocessing"),
     config_name="config",
     version_base=None,
 )
@@ -30,20 +29,27 @@ def main(cfg: DictConfig) -> None:
         reuse_last_task_id=False,
         output_uri=output_uri,
     )
-    # if cfg.draft_mode:
-    #     task.execute_remotely()
+    if cfg.draft_mode:
+        task.execute_remotely()
 
-    log.info("Loading raw data")
-    interactions, impressions_dl = load_data()
+    log.info("Step 1 - Loading raw data")
+    interactions, impressions = load_data()
+    log.info("Step 1 - Success!")
 
-    log.info("Parsing")
-    train, val, test, params = prepare_data(interactions, impressions_dl, cfg.type)
-    log.info(f"Found data properties: {params}")
+    log.info("Step 2 - Parsing data")
+    train, val, test, stats = prepare_data(
+        interactions,
+        impressions,
+        cfg.data_type,
+        cfg.n_user_clicks,
+        cfg.n_item_clicks,
+    )
+    log.info("Step 2 - Success!")
+    log.info(f"Details of obtained data: {stats}")
 
-    log.info("Saving parsed data")
-    save_data(task, train, val, test, params)
-
-    log.info("Done!")
+    log.info("Step 3 - Saving prepared data")
+    save_data(task, train, val, test, stats)
+    log.info("Step 3 - Success!")
 
 
 if __name__ == "__main__":

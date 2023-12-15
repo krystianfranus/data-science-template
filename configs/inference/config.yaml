@@ -7,8 +7,8 @@ hydra:
   run:
     dir: .
 
-model_type: ???  # simple_mlp, simple_mf, bpr_mlp, bpr_mf
-execute_remotely: false
+model_type: "simple_mlp"  # simple_mlp, simple_mf, bpr_mlp, bpr_mf
+draft_mode: false
 prev_task_id: null
 num_workers: 8
 pin_memory: true

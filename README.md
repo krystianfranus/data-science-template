@@ -51,10 +51,10 @@ docker run -dit --gpus all --name ds-container ds-image  # Run container based o
 ## Quick start
 
 ```bash
-python steps/preprocess.py type=simple
-python steps/compute_baseline.py type=simple
-python steps/train.py experiment=simple_mlp
-python steps/infer.py model_type=simple_mlp
+python steps/preprocess.py
+python steps/compute_baseline.py
+python steps/train.py
+python steps/infer.py
 ```
 
 ## Other useful commands:

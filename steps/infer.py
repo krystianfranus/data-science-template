@@ -24,20 +24,20 @@ log = logging.getLogger(__name__)
 
 
 @hydra.main(
-    config_path=os.path.join(get_project_root(), "configs", "inference"),
+    config_path=str(get_project_root() / "configs" / "inference"),
     config_name="config",
     version_base=None,
 )
 def main(cfg: DictConfig) -> None:
-    Task.init(
+    task = Task.init(
         project_name="MyProject",
         task_name="Inference",
         task_type=TaskTypes.inference,
         reuse_last_task_id=False,
         output_uri=None,
     )
-    # if cfg.execute_remotely:
-    #     task.execute_remotely()
+    if cfg.draft_mode:
+        task.execute_remotely()
 
     task_prev = Task.get_task(project_name="MyProject", task_name="Training")
     if cfg.prev_task_id is not None:

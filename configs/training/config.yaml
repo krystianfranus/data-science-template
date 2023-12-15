@@ -5,7 +5,7 @@ defaults:
   - callbacks: default
   - trainer: default
 
-  - experiment: null
+  - experiment: "simple_mlp"  # Choose one from 'experiment' config
 
   - override hydra/job_logging: custom
 

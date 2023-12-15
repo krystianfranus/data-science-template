@@ -7,5 +7,5 @@ hydra:
   run:
     dir: .
 
-type: ???  # simple, bpr
+data_type: "simple"  # simple, bpr
 prev_task_id: null
