@@ -4,3 +4,4 @@ accelerator: cpu
 devices: 1
 max_epochs: ???
 num_sanity_val_steps: 0
+enable_model_summary: true

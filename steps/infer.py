@@ -1,5 +1,4 @@
 import logging
-import os
 
 import hydra
 import pandas as pd
@@ -56,6 +55,7 @@ def main(cfg: DictConfig) -> None:
             model = BPRMFTask.load_from_checkpoint(ckpt_path)
         case _:
             raise ValueError(f"Invalid model type, you provided '{cfg.model_type}'")
+    log.info("Loading model - success!")
 
     log.info("Instantiating dataloader")
     n_users = model.net.embed_user.num_embeddings
@@ -67,11 +67,14 @@ def main(cfg: DictConfig) -> None:
         num_workers=cfg.num_workers,
         pin_memory=cfg.pin_memory,
     )
+    log.info("Instantiating dataloader - success!")
 
     log.info("Predicting")
     predictions = Trainer(logger=False).predict(model, dataloaders=dataloader)
     predictions = torch.concat(predictions).view(n_users, n_items)
+    log.info("Predicting - success!")
 
+    log.info("Preparing lists with recommendations")
     recs = pd.DataFrame(
         predictions.sort(descending=True)[1][:20, :10],
         columns=[f"top{i} item" for i in range(1, 11)],
@@ -82,8 +85,7 @@ def main(cfg: DictConfig) -> None:
         iteration=0,
         table_plot=recs,
     )
-
-    log.info("Done!")
+    log.info("Preparing lists with recommendations - success!")
 
 
 if __name__ == "__main__":

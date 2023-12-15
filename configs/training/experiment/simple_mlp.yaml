@@ -19,4 +19,4 @@ model:
 
 trainer:
   accelerator: "gpu"
-  max_epochs: 3
+  max_epochs: 5

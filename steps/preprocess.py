@@ -32,11 +32,11 @@ def main(cfg: DictConfig) -> None:
     if cfg.draft_mode:
         task.execute_remotely()
 
-    log.info("Step 1 - Loading raw data")
+    log.info("Loading raw data")
     interactions, impressions = load_data()
-    log.info("Step 1 - Success!")
+    log.info("Loading raw data - success!")
 
-    log.info("Step 2 - Parsing data")
+    log.info("Parsing data")
     train, val, test, stats = prepare_data(
         interactions,
         impressions,
@@ -44,12 +44,12 @@ def main(cfg: DictConfig) -> None:
         cfg.n_user_clicks,
         cfg.n_item_clicks,
     )
-    log.info("Step 2 - Success!")
+    log.info("Parsing data - success!")
     log.info(f"Details of obtained data: {stats}")
 
-    log.info("Step 3 - Saving prepared data")
+    log.info("Saving prepared data")
     save_data(task, train, val, test, stats)
-    log.info("Step 3 - Success!")
+    log.info("Saving prepared data - success!")
 
 
 if __name__ == "__main__":

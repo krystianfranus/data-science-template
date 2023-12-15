@@ -5,9 +5,9 @@ from pandas import DataFrame
 from torchmetrics import RetrievalNormalizedDCG
 
 
-def compute_baseline(train: DataFrame, val: DataFrame, type: str) -> None:
+def compute_baseline(train: DataFrame, val: DataFrame, data_type: str) -> None:
     # Add item popularity to val dataframe
-    match type:
+    match data_type:
         case "simple":
             stats_per_item = (
                 train.groupby("item")
@@ -71,32 +71,32 @@ def compute_baseline(train: DataFrame, val: DataFrame, type: str) -> None:
         table_plot=baseline,
     )
 
-    # Log bottom10 and top10 items based on popularity
+    # Log top10 and bottom10 items based on popularity (by #clicks)
     tmp = stats_per_item.sort_values("n_clicks", ascending=False).reset_index(drop=True)
     Logger.current_logger().report_table(
         "Items popularity (based on #clicks)",
-        "Bottom 10",
+        "Top 10",
         iteration=0,
-        table_plot=tmp[-10:],
+        table_plot=tmp[:10],
     )
     Logger.current_logger().report_table(
         "Items popularity (based on #clicks)",
+        "Bottom 10",
+        iteration=0,
+        table_plot=tmp[-10:],
+    )
+
+    # Log top10 and bottom10 items based on popularity(by ctr)
+    tmp = stats_per_item.sort_values("ctr", ascending=False).reset_index(drop=True)
+    Logger.current_logger().report_table(
+        "Items popularity (based on ctr)",
         "Top 10",
         iteration=0,
         table_plot=tmp[:10],
     )
-
-    # Log bottom10 and top10 items based on popularity
-    tmp = stats_per_item.sort_values("ctr", ascending=False).reset_index(drop=True)
     Logger.current_logger().report_table(
         "Items popularity (based on ctr)",
         "Bottom 10",
         iteration=0,
         table_plot=tmp[-10:],
-    )
-    Logger.current_logger().report_table(
-        "Items popularity (based on ctr)",
-        "Top 10",
-        iteration=0,
-        table_plot=tmp[:10],
     )

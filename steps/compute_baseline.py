@@ -1,5 +1,4 @@
 import logging
-import os
 
 import hydra
 from clearml import Task, TaskTypes
@@ -32,14 +31,14 @@ def main(cfg: DictConfig) -> None:
         task_name="Preprocessing",
     )
 
-    log.info("Step 1 - Loading data")
+    log.info("Loading data")
     train = task_prev.artifacts["train"].get()
     val = task_prev.artifacts["val"].get()
-    log.info("Step 1 - Success!")
+    log.info("Loading data - success!")
 
-    log.info("Step 2 - Computing baselines")
+    log.info("Computing baselines")
     compute_baseline(train, val, cfg.data_type)
-    log.info("Step 2 - Success!")
+    log.info("Computing baselines - success!")
 
 
 if __name__ == "__main__":

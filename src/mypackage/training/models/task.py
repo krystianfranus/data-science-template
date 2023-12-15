@@ -48,7 +48,7 @@ class SimpleMFTask(LightningModule):
 
     def training_step(self, batch, batch_idx):
         loss, *_ = self.step(batch)
-        self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("loss/train", loss, on_step=False, on_epoch=True, prog_bar=True)
         if batch_idx == 0:
             self.logger.experiment.add_histogram(
                 "embed_user",
@@ -66,7 +66,7 @@ class SimpleMFTask(LightningModule):
 
     def validation_step(self, batch, batch_idx):
         loss, targets_true, targets_pred, users = self.step(batch)
-        self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("loss/val", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.val_step_outputs.append((targets_pred, targets_true, users))
 
     def on_validation_epoch_end(self):
@@ -75,8 +75,8 @@ class SimpleMFTask(LightningModule):
 
         self.val_ndcg(targets_pred, targets_true, indexes=users)
         self.val_auroc(targets_pred, targets_true)
-        self.log("val/ndcg", self.val_ndcg, prog_bar=True)
-        self.log("val/auroc", self.val_auroc, prog_bar=True)
+        self.log("ndcg/val", self.val_ndcg, prog_bar=True)
+        self.log("auroc/val", self.val_auroc, prog_bar=True)
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):
@@ -146,7 +146,7 @@ class SimpleMLPTask(LightningModule):
         self.manual_backward(loss)
         optimizer1.step()
         optimizer2.step()
-        self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("loss/train", loss, on_step=False, on_epoch=True, prog_bar=True)
 
         # step every 100 batches
         if (batch_idx + 1) % 100 == 0:
@@ -158,7 +158,7 @@ class SimpleMLPTask(LightningModule):
 
     def validation_step(self, batch, batch_idx):
         loss, targets_true, targets_pred, users = self.step(batch)
-        self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("loss/val", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.val_step_outputs.append((targets_pred, targets_true, users))
 
     def on_validation_epoch_end(self):
@@ -166,8 +166,8 @@ class SimpleMLPTask(LightningModule):
         targets_pred, targets_true, users = map(torch.cat, zip(*self.val_step_outputs))
         self.val_ndcg(targets_pred, targets_true, indexes=users)
         self.val_auroc(targets_pred, targets_true)
-        self.log("val/ndcg", self.val_ndcg, prog_bar=True)
-        self.log("val/auroc", self.val_auroc, prog_bar=True)
+        self.log("ndcg/val", self.val_ndcg, prog_bar=True)
+        self.log("auroc/val", self.val_auroc, prog_bar=True)
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):
@@ -228,7 +228,7 @@ class BPRMFTask(LightningModule):
         pred_neg = self.net(users, items_neg)
         pred_pos = self.net(users, items_pos)
         loss = self.criterion(pred_pos, pred_neg)
-        self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("loss/train", loss, on_step=False, on_epoch=True, prog_bar=True)
         if batch_idx == 0:
             self.logger.experiment.add_histogram(
                 "embed_user",
@@ -248,7 +248,7 @@ class BPRMFTask(LightningModule):
         users, items, targets_true = batch
         targets_pred = self.forward(users, items)
         loss = self.criterion(targets_pred, targets_true)
-        self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("loss/val", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.val_step_outputs.append((targets_pred, targets_true, users))
 
     def on_validation_epoch_end(self):
@@ -256,8 +256,8 @@ class BPRMFTask(LightningModule):
         targets_pred, targets_true, users = map(torch.cat, zip(*self.val_step_outputs))
         self.val_ndcg(targets_pred, targets_true, indexes=users)
         self.val_auroc(targets_pred, targets_true)
-        self.log("val/ndcg", self.val_ndcg, prog_bar=True)
-        self.log("val/auroc", self.val_auroc, prog_bar=True)
+        self.log("ndcg/val", self.val_ndcg, prog_bar=True)
+        self.log("auroc/val", self.val_auroc, prog_bar=True)
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):
@@ -310,7 +310,7 @@ class BPRMLPTask(LightningModule):
         self.manual_backward(loss)
         optimizer1.step()
         optimizer2.step()
-        self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("loss/train", loss, on_step=False, on_epoch=True, prog_bar=True)
         if batch_idx == 0:
             self.logger.experiment.add_histogram(
                 "embed_user",
@@ -337,7 +337,7 @@ class BPRMLPTask(LightningModule):
         users, items, targets_true = batch
         targets_pred = self.forward(users, items)
         loss = self.criterion(targets_pred, targets_true)
-        self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("loss/val", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.val_step_outputs.append((targets_pred, targets_true, users))
 
     def on_validation_epoch_end(self):
@@ -345,8 +345,8 @@ class BPRMLPTask(LightningModule):
         targets_pred, targets_true, users = map(torch.cat, zip(*self.val_step_outputs))
         self.val_ndcg(targets_pred, targets_true, indexes=users)
         self.val_auroc(targets_pred, targets_true)
-        self.log("val/ndcg", self.val_ndcg, prog_bar=True)
-        self.log("val/auroc", self.val_auroc, prog_bar=True)
+        self.log("ndcg/val", self.val_ndcg, prog_bar=True)
+        self.log("auroc/val", self.val_auroc, prog_bar=True)
         self.val_step_outputs.clear()
 
     def configure_optimizers(self):

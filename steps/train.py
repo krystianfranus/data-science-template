@@ -37,33 +37,38 @@ def main(cfg: DictConfig) -> None:
         task_name="Preprocessing",
     )
 
+    log.info("Loading data")
     train = task_prev.artifacts["train"].get()
     val = task_prev.artifacts["val"].get()
     test = task_prev.artifacts["test"].get()
     stats = task_prev.artifacts["stats"].get()
+    log.info("Loading data - success!")
 
     log.info("Instantiating datamodule")
     datamodule_params = {"train": train, "val": val, "test": test}
     datamodule = hydra.utils.instantiate(cfg.datamodule, **datamodule_params)
+    log.info("Instantiating datamodule - success!")
 
     log.info("Instantiating model")
     model = hydra.utils.instantiate(cfg.model, **stats)
+    log.info("Instantiating model - success!")
 
     log.info("Instantiating callbacks")
     callbacks = []
     for _, cb_cfg in cfg.callbacks.items():
         if isinstance(cb_cfg, DictConfig) and "_target_" in cb_cfg:
             callbacks.append(hydra.utils.instantiate(cb_cfg))
+    log.info("Instantiating callbacks - success!")
 
     log.info("Instantiating trainer")
     trainer = hydra.utils.instantiate(
         cfg.trainer, callbacks=callbacks, default_root_dir=get_project_root()
     )
+    log.info("Instantiating trainer - success!")
 
     log.info("Training")
     trainer.fit(model=model, datamodule=datamodule)
-
-    log.info("Done!")
+    log.info("Training - success!")
 
 
 if __name__ == "__main__":
