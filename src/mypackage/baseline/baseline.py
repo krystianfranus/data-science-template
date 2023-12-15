@@ -2,7 +2,7 @@ import pandas as pd
 import torch
 from clearml import Logger
 from pandas import DataFrame
-from torchmetrics import RetrievalNormalizedDCG
+from torchmetrics.retrieval import RetrievalNormalizedDCG
 
 
 def compute_baseline(train: DataFrame, val: DataFrame, data_type: str) -> None:
