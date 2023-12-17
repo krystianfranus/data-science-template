@@ -8,7 +8,7 @@ hydra:
     dir: .
 
 data_type: "simple"  # simple, bpr
-n_user_clicks: 5
+n_user_clicks: 10
 n_item_clicks: 10
 use_remote_storage: false
 draft_mode: false
