@@ -5,14 +5,14 @@ defaults:
   - override /model: bpr_mf
 
 datamodule:
-  batch_size: 1024
+  batch_size: 8192
   num_workers: 8
   pin_memory: true
 
 model:
-  embed_size: 24
-  lr: 1e-3
+  embed_size: 32
+  lr: 0.0001
 
 trainer:
   accelerator: "gpu"
-  max_epochs: 5
+  max_epochs: 50

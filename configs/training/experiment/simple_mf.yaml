@@ -10,9 +10,9 @@ datamodule:
   pin_memory: true
 
 model:
-  embed_size: 24
-  lr: 0.0001
+  embed_size: 32
+  lr: 0.001
 
 trainer:
   accelerator: "gpu"
-  max_epochs: 5
+  max_epochs: 100

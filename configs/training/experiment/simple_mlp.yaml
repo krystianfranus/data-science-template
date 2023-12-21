@@ -10,13 +10,13 @@ datamodule:
   pin_memory: true
 
 model:
-  n_factors: 6
-  n_layers: 3
+  n_factors: 8
+  n_layers: 4
   dropout: 0.5
-  lr1: 0.01
+  lr1: 0.001
   lr2: 0.0001
   weight_decay: 0.005
 
 trainer:
   accelerator: "gpu"
-  max_epochs: 10
+  max_epochs: 100

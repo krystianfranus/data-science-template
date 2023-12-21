@@ -148,8 +148,8 @@ class SimpleMLPTask(LightningModule):
         optimizer2.step()
         self.log("loss/train", loss, on_step=False, on_epoch=True, prog_bar=True)
 
-        # step every 100 batches
-        if (batch_idx + 1) % 100 == 0:
+        # step every 50 batches
+        if (batch_idx + 1) % 50 == 0:
             scheduler1, scheduler2 = self.lr_schedulers()
             scheduler1.step()
             scheduler2.step()
@@ -247,7 +247,9 @@ class BPRMFTask(LightningModule):
     def validation_step(self, batch, batch_idx):
         users, items, targets_true = batch
         targets_pred = self.forward(users, items)
-        loss = self.criterion(targets_pred, targets_true)
+        loss = self.criterion(
+            targets_pred, targets_true
+        )  # TODO: THIS IS INCORRECT LOSS COMPUTATION
         self.log("loss/val", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.val_step_outputs.append((targets_pred, targets_true, users))
 
@@ -325,8 +327,8 @@ class BPRMLPTask(LightningModule):
                 bins="fd",
             )
 
-        # step every 200 batches
-        if (batch_idx + 1) % 200 == 0:
+        # step every 50 batches
+        if (batch_idx + 1) % 50 == 0:
             scheduler1, scheduler2 = self.lr_schedulers()
             scheduler1.step()
             scheduler2.step()
@@ -336,7 +338,9 @@ class BPRMLPTask(LightningModule):
     def validation_step(self, batch, batch_idx):
         users, items, targets_true = batch
         targets_pred = self.forward(users, items)
-        loss = self.criterion(targets_pred, targets_true)
+        loss = self.criterion(
+            targets_pred, targets_true
+        )  # TODO: THIS IS INCORRECT LOSS COMPUTATION
         self.log("loss/val", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.val_step_outputs.append((targets_pred, targets_true, users))
 

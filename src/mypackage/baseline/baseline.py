@@ -2,6 +2,7 @@ import pandas as pd
 import torch
 from clearml import Logger
 from pandas import DataFrame
+from torchmetrics.functional import auroc
 from torchmetrics.retrieval import RetrievalNormalizedDCG
 
 
@@ -41,7 +42,7 @@ def compute_baseline(train: DataFrame, val: DataFrame, data_type: str) -> None:
             raise ValueError(f"Invalid data type, you provided '{type}'")
     val = val.merge(stats_per_item, "inner", "item")
 
-    # Compute ndcg for different scenarios
+    # Compute aucroc and ndcg for different scenarios
     indexes = torch.tensor(val["user"])
     target = torch.tensor(val["target"])
     worst_preds = torch.tensor((val["target"] + 1) % 2, dtype=torch.float32)
@@ -49,6 +50,12 @@ def compute_baseline(train: DataFrame, val: DataFrame, data_type: str) -> None:
     top_clicks_preds = torch.tensor(val["n_clicks"], dtype=torch.float32)
     top_ctr_preds = torch.tensor(val["ctr"], dtype=torch.float32)
     best_preds = torch.tensor(val["target"], dtype=torch.float32)
+
+    worst_auroc = auroc(worst_preds, target, "binary").item()
+    random_auroc = auroc(random_preds, target, "binary").item()
+    top_clicks_auroc = auroc(top_clicks_preds, target, "binary").item()
+    top_ctr_auroc = auroc(top_ctr_preds, target, "binary").item()
+    best_auroc = auroc(best_preds, target, "binary").item()
 
     ndcg = RetrievalNormalizedDCG()
     worst_ndcg = ndcg(worst_preds, target, indexes=indexes).item()
@@ -59,14 +66,22 @@ def compute_baseline(train: DataFrame, val: DataFrame, data_type: str) -> None:
 
     # Log NDCG
     baseline = pd.DataFrame()
-    baseline.loc["Worst model", "value"] = worst_ndcg
-    baseline.loc["Random model", "value"] = random_ndcg
-    baseline.loc["Popularity-based model (by #clicks)", "value"] = top_clicks_ndcg
-    baseline.loc["Popularity-based model (by ctr)", "value"] = top_ctr_ndcg
-    baseline.loc["Best model", "value"] = best_ndcg
+
+    baseline.loc["Worst model", "auroc"] = worst_auroc
+    baseline.loc["Random model", "auroc"] = random_auroc
+    baseline.loc["Popularity-based model (by #clicks)", "auroc"] = top_clicks_auroc
+    baseline.loc["Popularity-based model (by ctr)", "auroc"] = top_ctr_auroc
+    baseline.loc["Best model", "auroc"] = best_auroc
+
+    baseline.loc["Worst model", "ndcg"] = worst_ndcg
+    baseline.loc["Random model", "ndcg"] = random_ndcg
+    baseline.loc["Popularity-based model (by #clicks)", "ndcg"] = top_clicks_ndcg
+    baseline.loc["Popularity-based model (by ctr)", "ndcg"] = top_ctr_ndcg
+    baseline.loc["Best model", "ndcg"] = best_ndcg
+
     Logger.current_logger().report_table(
-        "Baselines of validation data",
-        "NDCG",
+        "Baselines computed on validation data",
+        "AUROC & NDCG",
         iteration=0,
         table_plot=baseline,
     )
