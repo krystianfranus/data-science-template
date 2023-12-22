@@ -3,14 +3,14 @@ model_checkpoint:
   filename: "best_model"
   save_last: false
   save_top_k: 1
-  monitor: "ndcg/val"
+  monitor: "auroc/val"
   mode: "max"
 
 early_stopping:
   _target_: lightning.pytorch.callbacks.EarlyStopping
-  monitor: "ndcg/val"
+  monitor: "auroc/val"
   mode: "max"
-  patience: 100
+  patience: 500
 
 # rich_model_summary:
 #  _target_: lightning.pytorch.callbacks.RichModelSummary

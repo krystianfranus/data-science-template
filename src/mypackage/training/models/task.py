@@ -5,7 +5,7 @@ from lightning.pytorch import LightningModule
 from torch import Tensor
 from torch.nn import BCEWithLogitsLoss
 from torch.optim import Adam, SparseAdam
-from torch.optim.lr_scheduler import ExponentialLR
+from torch.optim.lr_scheduler import StepLR
 from torchmetrics.classification import BinaryAUROC
 from torchmetrics.retrieval import RetrievalNormalizedDCG
 
@@ -148,8 +148,7 @@ class SimpleMLPTask(LightningModule):
         optimizer2.step()
         self.log("loss/train", loss, on_step=False, on_epoch=True, prog_bar=True)
 
-        # step every 50 batches
-        if (batch_idx + 1) % 50 == 0:
+        if self.trainer.is_last_batch:
             scheduler1, scheduler2 = self.lr_schedulers()
             scheduler1.step()
             scheduler2.step()
@@ -177,8 +176,8 @@ class SimpleMLPTask(LightningModule):
             lr=self.hparams.lr2,
             weight_decay=self.hparams.weight_decay,
         )
-        scheduler1 = ExponentialLR(optimizer1, gamma=0.95)
-        scheduler2 = ExponentialLR(optimizer2, gamma=0.99)
+        scheduler1 = StepLR(optimizer1, step_size=1, gamma=0.98)
+        scheduler2 = StepLR(optimizer2, step_size=1, gamma=0.99)
         return [optimizer1, optimizer2], [scheduler1, scheduler2]
 
 
@@ -327,8 +326,7 @@ class BPRMLPTask(LightningModule):
                 bins="fd",
             )
 
-        # step every 50 batches
-        if (batch_idx + 1) % 50 == 0:
+        if self.trainer.is_last_batch:
             scheduler1, scheduler2 = self.lr_schedulers()
             scheduler1.step()
             scheduler2.step()
@@ -360,6 +358,6 @@ class BPRMLPTask(LightningModule):
             lr=self.hparams.lr2,
             weight_decay=self.hparams.weight_decay,
         )
-        scheduler1 = ExponentialLR(optimizer1, gamma=0.99)
-        scheduler2 = ExponentialLR(optimizer2, gamma=0.99)
+        scheduler1 = StepLR(optimizer1, step_size=1, gamma=0.95)
+        scheduler2 = StepLR(optimizer2, step_size=1, gamma=0.97)
         return [optimizer1, optimizer2], [scheduler1, scheduler2]

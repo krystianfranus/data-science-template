@@ -76,11 +76,11 @@ def main(cfg: DictConfig) -> None:
 
     log.info("Preparing lists with recommendations")
     recs = pd.DataFrame(
-        predictions.sort(descending=True)[1][:20, :10],
+        predictions.sort(descending=True)[1][:100, :10],
         columns=[f"top{i} item" for i in range(1, 11)],
     )
     Logger.current_logger().report_table(
-        "Recommendations for first 20 users",
+        "Recommendations for first 100 users",
         "Top 10 items",
         iteration=0,
         table_plot=recs,

@@ -13,10 +13,10 @@ model:
   n_factors: 8
   n_layers: 4
   dropout: 0.5
-  lr1: 0.001
-  lr2: 0.0001
-  weight_decay: 0.005
+  lr1: 0.01
+  lr2: 0.001
+  weight_decay: 0.001
 
 trainer:
   accelerator: "gpu"
-  max_epochs: 100
+  max_epochs: 500
