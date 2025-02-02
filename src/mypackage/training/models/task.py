@@ -100,8 +100,9 @@ class SimpleMLPTask(LightningModule):
         super().__init__()
         self.save_hyperparameters(logger=False)
         self.net = MLP(n_users, n_items, n_factors, n_layers, dropout)
-        pos_weight = torch.tensor([kwargs["n_impressions"] / kwargs["n_clicks"]])
-        self.criterion = BCEWithLogitsLoss(pos_weight=pos_weight)
+        # pos_weight = torch.tensor([kwargs["n_impressions"] / kwargs["n_clicks"]])
+        # self.criterion = BCEWithLogitsLoss(pos_weight=pos_weight)
+        self.criterion = BCEWithLogitsLoss()
         self.val_ndcg = RetrievalNormalizedDCG()
         self.val_auroc = BinaryAUROC()
 

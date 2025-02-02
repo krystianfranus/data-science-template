@@ -35,14 +35,13 @@ def main(cfg: DictConfig) -> None:
     task_prev = Task.get_task(
         task_id=cfg.prev_task_id,
         project_name="MyProject",
-        task_name="Preprocessing",
+        task_name="DataProcessing",
     )
 
     log.info("Loading data")
     train = task_prev.artifacts["train"].get()
     val = task_prev.artifacts["val"].get()
     test = task_prev.artifacts["test"].get()
-    stats = task_prev.artifacts["stats"].get()
     log.info("Loading data - success!")
 
     log.info("Instantiating datamodule")
@@ -51,7 +50,9 @@ def main(cfg: DictConfig) -> None:
     log.info("Instantiating datamodule - success!")
 
     log.info("Instantiating model")
-    model = hydra.utils.instantiate(cfg.model, **stats)
+    n_users = train["user"].nunique()
+    n_items = train["item"].nunique()
+    model = hydra.utils.instantiate(cfg.model, n_users=n_users, n_items=n_items)
     summary(model.net)
     log.info("Instantiating model - success!")
 

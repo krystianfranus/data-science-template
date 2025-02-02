@@ -1,5 +1,7 @@
 defaults:
   - _self_
+  - data_processing: default
+  - baselines: default
   - override hydra/job_logging: custom
 
 hydra:
@@ -7,8 +9,4 @@ hydra:
   run:
     dir: .
 
-data_type: "simple"  # simple, bpr
-n_user_clicks: 10
-n_item_clicks: 10
 use_remote_storage: false
-draft_mode: false

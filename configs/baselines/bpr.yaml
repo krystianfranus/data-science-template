@@ -1,0 +1,6 @@
+defaults:
+  - base 
+  
+method:
+  _target_: mypackage.baselines.baselines.compute_baselines_bpr
+

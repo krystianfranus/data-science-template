@@ -6,40 +6,44 @@ from torchmetrics.functional import auroc
 from torchmetrics.retrieval import RetrievalNormalizedDCG
 
 
-def compute_baseline(train: DataFrame, val: DataFrame, data_type: str) -> None:
-    # Add item popularity to val dataframe
-    match data_type:
-        case "simple":
-            stats_per_item = (
-                train.groupby("item")
-                .agg({"target": ["sum", "mean"]})
-                .droplevel(0, axis=1)
-                .rename(columns={"sum": "n_clicks", "mean": "ctr"})
-                .reset_index()
-            )
-        case "bpr":
-            clicks_per_user = train[["user", "item_pos"]].drop_duplicates()
-            stats_pos = (
-                clicks_per_user.groupby("item_pos")
-                .count()
-                .reset_index()
-                .rename(columns={"item_pos": "item", "user": "n_clicks"})
-            )
+def compute_baselines_default(train: DataFrame, val: DataFrame) -> None:
+    stats_per_item = (
+        train.groupby("item")
+        .agg({"target": ["sum", "mean"]})
+        .droplevel(0, axis=1)
+        .rename(columns={"sum": "n_clicks", "mean": "ctr"})
+        .reset_index()
+    )
 
-            impressions_per_user = train[["user", "item_neg"]].drop_duplicates()
-            stats_neg = (
-                impressions_per_user.groupby("item_neg")
-                .count()
-                .reset_index()
-                .rename(columns={"item_neg": "item", "user": "n_impressions"})
-            )
+    _common(stats_per_item, val)
 
-            stats_per_item = stats_pos.merge(stats_neg, "inner", "item")
-            stats_per_item["ctr"] = stats_per_item["n_clicks"] / (
-                stats_per_item["n_clicks"] + stats_per_item["n_impressions"]
-            )
-        case _:
-            raise ValueError(f"Invalid data type, you provided '{type}'")
+
+def compute_baselines_bpr(train: DataFrame, val: DataFrame) -> None:
+    clicks_per_user = train[["user", "item_pos"]].drop_duplicates()
+    stats_pos = (
+        clicks_per_user.groupby("item_pos")
+        .count()
+        .reset_index()
+        .rename(columns={"item_pos": "item", "user": "n_clicks"})
+    )
+
+    impressions_per_user = train[["user", "item_neg"]].drop_duplicates()
+    stats_neg = (
+        impressions_per_user.groupby("item_neg")
+        .count()
+        .reset_index()
+        .rename(columns={"item_neg": "item", "user": "n_impressions"})
+    )
+
+    stats_per_item = stats_pos.merge(stats_neg, "inner", "item")
+    stats_per_item["ctr"] = stats_per_item["n_clicks"] / (
+        stats_per_item["n_clicks"] + stats_per_item["n_impressions"]
+    )
+
+    _common(stats_per_item, val)
+
+
+def _common(stats_per_item: DataFrame, val: DataFrame):
     val = val.merge(stats_per_item, "inner", "item")
 
     # Compute aucroc and ndcg for different scenarios

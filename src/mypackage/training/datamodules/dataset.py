@@ -7,9 +7,9 @@ from torch.utils.data import Dataset, IterableDataset
 
 class TrainDataset(Dataset):
     def __init__(self, data: pd.DataFrame):
-        self.users = torch.tensor(data.iloc[:, 0].to_numpy())
-        self.items = torch.tensor(data.iloc[:, 1].to_numpy())
-        self.targets = torch.tensor(data.iloc[:, 2].to_numpy(), dtype=torch.float32)
+        self.users = torch.tensor(data["user"].to_numpy())
+        self.items = torch.tensor(data["item"].to_numpy())
+        self.targets = torch.tensor(data["target"].to_numpy(), dtype=torch.float32)
 
     def __len__(self):
         return len(self.users)

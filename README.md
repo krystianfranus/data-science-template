@@ -51,7 +51,7 @@ docker run -dit --gpus all --name ds-container ds-image  # Run container based o
 ## Quick start
 
 ```bash
-python steps/preprocess.py
+python steps/process_data.py
 python steps/compute_baseline.py
 python steps/train.py
 python steps/infer.py
