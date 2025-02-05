@@ -30,23 +30,22 @@ class MLP(nn.Module):
         self,
         n_users: int,
         n_items: int,
-        n_factors: int,
+        embed_size: int,
         n_layers: int,
         dropout: float,
     ):
         super().__init__()
 
-        embed_size = n_factors * (2 ** (n_layers - 1))
         self.embed_user = nn.Embedding(n_users, embed_size, sparse=True)
         self.embed_item = nn.Embedding(n_items, embed_size, sparse=True)
         mlp_modules: list[nn.Module] = []
         for i in range(n_layers):
-            input_size = n_factors * (2 ** (n_layers - i))
+            input_size = (2 * embed_size) // (2**i)
             mlp_modules.append(nn.Dropout(p=dropout))
             mlp_modules.append(nn.Linear(input_size, input_size // 2))
             mlp_modules.append(nn.ReLU())
         self.mlp_layers = nn.Sequential(*mlp_modules)
-        self.output_layer = nn.Linear(n_factors, 1)
+        self.output_layer = nn.Linear(input_size // 2, 1)
 
         self._init_weights()
 

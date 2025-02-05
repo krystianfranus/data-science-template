@@ -2,11 +2,10 @@ import pandas as pd
 import torch
 from clearml import Logger
 from pandas import DataFrame
-from torchmetrics.functional import auroc
-from torchmetrics.retrieval import RetrievalNormalizedDCG
+from torchmetrics.retrieval import RetrievalAUROC, RetrievalNormalizedDCG
 
 
-def compute_baselines_default(train: DataFrame, val: DataFrame) -> None:
+def compute_baselines_simple(train: DataFrame, val: DataFrame) -> None:
     stats_per_item = (
         train.groupby("item")
         .agg({"target": ["sum", "mean"]})
@@ -48,27 +47,28 @@ def _common(stats_per_item: DataFrame, val: DataFrame):
 
     # Compute aucroc and ndcg for different scenarios
     indexes = torch.tensor(val["user"])
-    target = torch.tensor(val["target"])
+    targets = torch.tensor(val["target"])
     worst_preds = torch.tensor((val["target"] + 1) % 2, dtype=torch.float32)
     random_preds = torch.rand(val.shape[0])
     top_clicks_preds = torch.tensor(val["n_clicks"], dtype=torch.float32)
-    top_ctr_preds = torch.tensor(val["ctr"], dtype=torch.float32)
+    top_ctr_preds = torch.tensor(val["ctr"])
     best_preds = torch.tensor(val["target"], dtype=torch.float32)
 
-    worst_auroc = auroc(worst_preds, target, "binary").item()
-    random_auroc = auroc(random_preds, target, "binary").item()
-    top_clicks_auroc = auroc(top_clicks_preds, target, "binary").item()
-    top_ctr_auroc = auroc(top_ctr_preds, target, "binary").item()
-    best_auroc = auroc(best_preds, target, "binary").item()
+    auroc = RetrievalAUROC(empty_target_action="skip")
+    worst_auroc = auroc(worst_preds, targets, indexes=indexes).item()
+    random_auroc = auroc(random_preds, targets, indexes=indexes).item()
+    top_clicks_auroc = auroc(top_clicks_preds, targets, indexes=indexes).item()
+    top_ctr_auroc = auroc(top_ctr_preds, targets, indexes=indexes).item()
+    best_auroc = auroc(best_preds, targets, indexes=indexes).item()
 
-    ndcg = RetrievalNormalizedDCG()
-    worst_ndcg = ndcg(worst_preds, target, indexes=indexes).item()
-    random_ndcg = ndcg(random_preds, target, indexes=indexes).item()
-    top_clicks_ndcg = ndcg(top_clicks_preds, target, indexes=indexes).item()
-    top_ctr_ndcg = ndcg(top_ctr_preds, target, indexes=indexes).item()
-    best_ndcg = ndcg(best_preds, target, indexes=indexes).item()
+    ndcg = RetrievalNormalizedDCG(empty_target_action="skip")
+    worst_ndcg = ndcg(worst_preds, targets, indexes=indexes).item()
+    random_ndcg = ndcg(random_preds, targets, indexes=indexes).item()
+    top_clicks_ndcg = ndcg(top_clicks_preds, targets, indexes=indexes).item()
+    top_ctr_ndcg = ndcg(top_ctr_preds, targets, indexes=indexes).item()
+    best_ndcg = ndcg(best_preds, targets, indexes=indexes).item()
 
-    # Log NDCG
+    # Log AUROC & NDCG
     baseline = pd.DataFrame()
 
     baseline.loc["Worst model", "auroc"] = worst_auroc
@@ -90,32 +90,32 @@ def _common(stats_per_item: DataFrame, val: DataFrame):
         table_plot=baseline,
     )
 
-    # Log top10 and bottom10 items based on popularity (by #clicks)
+    # Log top20 and bottom20 items based on popularity (by #clicks)
     tmp = stats_per_item.sort_values("n_clicks", ascending=False).reset_index(drop=True)
     Logger.current_logger().report_table(
         "Items popularity (based on #clicks)",
-        "Top 10",
+        "Top 20",
         iteration=0,
-        table_plot=tmp[:10],
+        table_plot=tmp[:20],
     )
     Logger.current_logger().report_table(
         "Items popularity (based on #clicks)",
-        "Bottom 10",
+        "Bottom 20",
         iteration=0,
-        table_plot=tmp[-10:],
+        table_plot=tmp[-20:],
     )
 
-    # Log top10 and bottom10 items based on popularity(by ctr)
+    # Log top20 and bottom20 items based on popularity(by ctr)
     tmp = stats_per_item.sort_values("ctr", ascending=False).reset_index(drop=True)
     Logger.current_logger().report_table(
         "Items popularity (based on ctr)",
-        "Top 10",
+        "Top 20",
         iteration=0,
-        table_plot=tmp[:10],
+        table_plot=tmp[:20],
     )
     Logger.current_logger().report_table(
         "Items popularity (based on ctr)",
-        "Bottom 10",
+        "Bottom 20",
         iteration=0,
-        table_plot=tmp[-10:],
+        table_plot=tmp[-20:],
     )

@@ -1,14 +1,8 @@
 defaults:
-  - datamodule: simple
-  - model: simple_mlp
-  - callbacks: default
-  - trainer: default
-  
-  - experiment: null  # Choose one from 'experiment' config
+  - method: simple
 
   - override hydra/job_logging: custom
   - _self_  # Primary config overrides values of configs from the Defaults List
-
 
 hydra:
   output_subdir: null
@@ -16,4 +10,4 @@ hydra:
     dir: .
 
 project_name: "MyProject"
-data_processing_task_id: null
+use_remote_storage: false

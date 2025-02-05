@@ -36,13 +36,11 @@ def load_raw_data() -> tuple[DataFrame, DataFrame]:
     return interactions, impressions
 
 
-def process_default(
+def process_simple(
     interactions: DataFrame,
     impressions: DataFrame,
-    n_user_clicks: int,
-    n_item_clicks: int,
 ) -> tuple[DataFrame, DataFrame, DataFrame, dict]:
-    interactions = _common(interactions, impressions, n_user_clicks, n_item_clicks)
+    interactions = _common(interactions, impressions)
 
     # Split data (train: 2019/01/07-2019/04/13; val: 2019/04/14-2019/04/15)
     split_date = dt.datetime(2019, 4, 14)
@@ -64,7 +62,7 @@ def process_default(
     # Limit val users to these who occured in train data and also keep val users with 0 < mean_target < 1
     # This way val users is a subset of train users (no cold users in val!)
     # and we have train users with number of clicks at least 1 and val users with number of clicks at least 2
-    val = val.merge(train_active_users, "inner", "user")
+    # val = val.merge(train_active_users, "inner", "user")
     val_active_users = (
         val.groupby("user")
         .agg({"target": "mean"})
@@ -76,29 +74,14 @@ def process_default(
     ]
     val = val.merge(val_active_users, "inner", "user")
 
-    # Prepare statistics
+    # Prepare user/item to idx mappers based on train data
     unique_train_users = train["user"].unique()
     unique_train_items = train["item"].unique()
-    unique_val_users = val["user"].unique()
-    unique_val_items = val["item"].unique()
-    stats = {}
-    stats["n_users_train"] = unique_train_users.size
-    stats["n_items_train"] = unique_train_items.size
-    stats["n_clicks_train"] = int(train["target"].sum())
-    stats["n_impressions_train"] = len(train) - stats["n_clicks_train"]
-    stats["ctr_train"] = stats["n_clicks_train"] / stats["n_impressions_train"]
-    stats["n_users_val"] = unique_val_users.size
-    stats["n_items_val"] = unique_val_items.size
-    stats["n_clicks_val"] = int(val["target"].sum())
-    stats["n_impressions_val"] = len(val) - stats["n_clicks_val"]
-    stats["ctr_val"] = stats["n_clicks_val"] / stats["n_impressions_val"]
-
-    # Prepare user/item to idx mappers based on train data
     user_mapper = pd.DataFrame(
-        {"user": unique_train_users, "user_idx": np.arange(stats["n_users_train"])}
+        {"user": unique_train_users, "user_idx": np.arange(unique_train_users.size)}
     )
     item_mapper = pd.DataFrame(
-        {"item": unique_train_items, "item_idx": np.arange(stats["n_items_train"])}
+        {"item": unique_train_items, "item_idx": np.arange(unique_train_items.size)}
     )
 
     # Map user/item to idx
@@ -119,16 +102,29 @@ def process_default(
     # Mock test_data
     test = val.copy()  # test set == validation set (should be changed in the future!)
 
+    # Prepare statistics
+    unique_val_users = val["user"].unique()
+    unique_val_items = val["item"].unique()
+    stats = {}
+    stats["train_n_users"] = unique_train_users.size
+    stats["train_n_items"] = unique_train_items.size
+    stats["train_n_clicks"] = int(train["target"].sum())
+    stats["train_n_impressions"] = len(train) - stats["train_n_clicks"]
+    stats["train_ctr"] = stats["train_n_clicks"] / stats["train_n_impressions"]
+    stats["val_n_users"] = unique_val_users.size
+    stats["val_n_items"] = unique_val_items.size
+    stats["val_n_clicks"] = int(val["target"].sum())
+    stats["val_n_impressions"] = len(val) - stats["val_n_clicks"]
+    stats["val_ctr"] = stats["val_n_clicks"] / stats["val_n_impressions"]
+
     return train, val, test, stats, user_mapper, item_mapper
 
 
 def process_bpr(
     interactions: DataFrame,
     impressions: DataFrame,
-    n_user_clicks: int,
-    n_item_clicks: int,
 ) -> tuple[DataFrame, DataFrame, DataFrame, dict]:
-    interactions = _common(interactions, impressions, n_user_clicks, n_item_clicks)
+    interactions = _common(interactions, impressions)
 
     # Split data
     split_date = dt.datetime(2019, 4, 14)
@@ -138,19 +134,29 @@ def process_bpr(
     train = tmp0.merge(tmp1, "inner", "user", suffixes=("_neg", "_pos"))
     val = interactions[interactions["timestamp"] >= split_date]
 
+    val_active_users = (
+        val.groupby("user")
+        .agg({"target": "mean"})
+        .rename(columns={"target": "mean"})
+        .reset_index()
+    )
+    val_active_users = val_active_users[
+        (val_active_users["mean"] > 0) & (val_active_users["mean"] < 1)
+    ]
+    val = val.merge(val_active_users, "inner", "user")
+
     # Prepare user/item to idx mappers based on train data
-    unique_users = train["user"].unique()
+    unique_train_users = train["user"].unique()
+    # unique_users = train["user"].unique()
     item_neg_set = set(train["item_neg"])
     item_pos_set = set(train["item_pos"])
-    unique_items = pd.Series(list(item_neg_set | item_pos_set)).unique()
-    stats = {}
-    stats["n_users"] = unique_users.size
-    stats["n_items"] = unique_items.size
+    unique_train_items = pd.Series(list(item_neg_set | item_pos_set)).unique()
+
     user_mapper = pd.DataFrame(
-        {"user": unique_users, "user_idx": np.arange(stats["n_users"])}
+        {"user": unique_train_users, "user_idx": np.arange(unique_train_users.size)}
     )
     item_mapper = pd.DataFrame(
-        {"item": unique_items, "item_idx": np.arange(stats["n_items"])}
+        {"item": unique_train_items, "item_idx": np.arange(unique_train_items.size)}
     )
 
     # Map user/item to idx and handle column names conflicts
@@ -175,6 +181,18 @@ def process_bpr(
 
     # Mock test_data
     test = val.copy()  # test set == validation set (to change in the future!)
+
+    # Prepare statistics
+    unique_val_users = val["user"].unique()
+    unique_val_items = val["item"].unique()
+    stats = {}
+    stats["train_n_users"] = unique_train_users.size
+    stats["train_n_items"] = unique_train_items.size
+    stats["val_n_users"] = unique_val_users.size
+    stats["val_n_items"] = unique_val_items.size
+    stats["val_n_clicks"] = int(val["target"].sum())
+    stats["val_n_impressions"] = len(val) - stats["val_n_clicks"]
+    stats["val_ctr"] = stats["val_n_clicks"] / stats["val_n_impressions"]
 
     return train, val, test, stats, user_mapper, item_mapper
 
@@ -220,8 +238,6 @@ def _download_data(data_dir: Path) -> None:
 def _common(
     interactions: DataFrame,
     impressions_dl: DataFrame,
-    n_user_clicks: int,
-    n_item_clicks: int,
 ) -> DataFrame:
     # Select only movies from item types
     interactions = interactions[interactions["item_type"] == 0]
@@ -254,13 +270,4 @@ def _common(
     ]
     interactions.columns = ["timestamp", "user", "item", "target"]
 
-    # Handle (user, item) duplicates - keep positive interactions first (if exist)
-    interactions = (
-        interactions.groupby(["user", "item"])
-        .agg({"target": "sum", "timestamp": "max"})
-        .reset_index()
-    )
-    interactions.loc[interactions["target"] > 0, "target"] = 1
-
-    interactions = interactions[["timestamp", "user", "item", "target"]]
     return interactions

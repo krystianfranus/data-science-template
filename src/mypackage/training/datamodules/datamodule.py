@@ -4,9 +4,7 @@ import lightning.pytorch as pl
 from pandas import DataFrame
 from torch.utils.data import DataLoader, Dataset
 
-from mypackage.training.datamodules.dataset import BPRDataset, TrainDataset
-
-# from mypackage.training.datamodules.dataset import CustomIterableDataset
+from mypackage.training.datamodules.dataset import BPRDataset, SimpleDataset
 
 
 class SimpleDataModule(pl.LightningDataModule):
@@ -27,14 +25,13 @@ class SimpleDataModule(pl.LightningDataModule):
 
     def setup(self, stage: Optional[str] = None):
         if stage == "fit":
-            self.train_dataset = TrainDataset(self.hparams.train)
-            self.val_dataset = TrainDataset(self.hparams.val)
-            # self.train_dataset = CustomIterableDataset(self.hparams.train)
-            # self.val_dataset = CustomIterableDataset(self.hparams.val)
+            self.train_dataset = SimpleDataset(self.hparams.train)
+            self.val_dataset = SimpleDataset(self.hparams.val)
+            # self.val_dataset = UserGroupedDataset(self.hparams.val)
 
         if stage == "test":
-            self.test_dataset = TrainDataset(self.hparams.test)
-            # self.test_dataset = CustomIterableDataset(self.hparams.test)
+            self.test_dataset = SimpleDataset(self.hparams.test)
+            # self.test_dataset = UserGroupedDataset(self.hparams.test)
 
     def train_dataloader(self):
         return DataLoader(
@@ -42,7 +39,7 @@ class SimpleDataModule(pl.LightningDataModule):
             batch_size=self.hparams.batch_size,
             num_workers=self.hparams.num_workers,
             pin_memory=self.hparams.pin_memory,
-            shuffle=False,
+            shuffle=True,
         )
 
     def val_dataloader(self):
@@ -53,6 +50,13 @@ class SimpleDataModule(pl.LightningDataModule):
             pin_memory=self.hparams.pin_memory,
             shuffle=False,
         )
+        # return DataLoader(
+        #     dataset=self.val_dataset,
+        #     batch_sampler=UserBatchSampler(self.val_dataset),
+        #     collate_fn=collate_fn,
+        #     num_workers=self.hparams.num_workers,
+        #     pin_memory=self.hparams.pin_memory,
+        # )
 
     def test_dataloader(self):
         return DataLoader(
@@ -83,10 +87,10 @@ class BPRDataModule(pl.LightningDataModule):
     def setup(self, stage: Optional[str] = None):
         if stage == "fit":
             self.train_dataset = BPRDataset(self.hparams.train)
-            self.val_dataset = TrainDataset(self.hparams.val)
+            self.val_dataset = SimpleDataset(self.hparams.val)
 
         if stage == "test":
-            self.test_dataset = TrainDataset(self.hparams.test)
+            self.test_dataset = SimpleDataset(self.hparams.test)
 
     def train_dataloader(self):
         return DataLoader(

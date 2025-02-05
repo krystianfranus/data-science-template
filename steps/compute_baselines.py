@@ -12,22 +12,26 @@ log = logging.getLogger(__name__)
 
 
 @hydra.main(
-    config_path=str(get_project_root() / "configs"),
+    config_path=str(get_project_root() / "configs" / "baselines"),
     config_name="config",
     version_base=None,
 )
 def main(cfg: DictConfig) -> None:
-    Task.init(
-        project_name="MyProject",
-        task_name="Baselines",
-        task_type=TaskTypes.custom,
-        reuse_last_task_id=False,
-    )
+    baselines_method_name = cfg.method._target_.split(".")[-1]
 
     task_data_processing = Task.get_task(
-        task_id=cfg.baselines.data_processing_clearml_task_id,
-        project_name="MyProject",
+        task_id=cfg.data_processing_task_id,
+        project_name=cfg.project_name,
         task_name="DataProcessing",
+    )
+
+    Task.init(
+        project_name=cfg.project_name,
+        task_name="Baselines",
+        task_type=TaskTypes.custom,
+        tags=[baselines_method_name],
+        reuse_last_task_id=False,
+        output_uri=task_data_processing.output_uri,
     )
 
     log.info("Loading data")
@@ -35,8 +39,8 @@ def main(cfg: DictConfig) -> None:
     val = task_data_processing.artifacts["val"].get()
     log.info("Data loaded successfully!")
 
-    log.info("Computing baselines")
-    hydra.utils.call(cfg.baselines.method, train=train, val=val)
+    log.info(f"Computing baselines using '{baselines_method_name}' method")
+    hydra.utils.call(cfg.method, train=train, val=val)
     log.info("Baselines computed successfully!")
 
 

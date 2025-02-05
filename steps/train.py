@@ -1,6 +1,7 @@
 import logging
 
 import hydra
+import numpy as np
 from clearml import Task, TaskTypes
 from dotenv import load_dotenv
 from omegaconf import DictConfig
@@ -18,58 +19,62 @@ log = logging.getLogger(__name__)
     version_base=None,
 )
 def main(cfg: DictConfig) -> None:
-    output_uri = None
-    if cfg.use_remote_storage:
-        output_uri = "s3://kf-north-bucket/data-science-template/output/"
-
-    task = Task.init(
-        project_name="MyProject",
-        task_name="Training",
-        task_type=TaskTypes.training,
-        reuse_last_task_id=False,
-        output_uri=output_uri,
-    )
-    if cfg.draft_mode:
-        task.execute_remotely()
-
-    task_prev = Task.get_task(
-        task_id=cfg.prev_task_id,
-        project_name="MyProject",
+    task_data_processing = Task.get_task(
+        task_id=cfg.data_processing_task_id,
+        project_name=cfg.project_name,
         task_name="DataProcessing",
     )
 
+    Task.init(
+        project_name=cfg.project_name,
+        task_name="Training",
+        task_type=TaskTypes.training,
+        reuse_last_task_id=False,
+        output_uri=task_data_processing.output_uri,
+    )
+
     log.info("Loading data")
-    train = task_prev.artifacts["train"].get()
-    val = task_prev.artifacts["val"].get()
-    test = task_prev.artifacts["test"].get()
-    log.info("Loading data - success!")
+    train = task_data_processing.artifacts["train"].get()
+    val = task_data_processing.artifacts["val"].get()
+    test = task_data_processing.artifacts["test"].get()
+    stats = task_data_processing.artifacts["stats"].get()
+    log.info("Data loaded successfully!")
 
     log.info("Instantiating datamodule")
-    datamodule_params = {"train": train, "val": val, "test": test}
+    batch_size = cfg.datamodule.batch_size
+    batch_size = batch_size if batch_size else int(np.sqrt(len(train)))
+    datamodule_params = {
+        "train": train,
+        "val": val,
+        "test": test,
+        "batch_size": batch_size,
+    }
     datamodule = hydra.utils.instantiate(cfg.datamodule, **datamodule_params)
-    log.info("Instantiating datamodule - success!")
+    log.info("Datamodule instantiated successfully!")
 
     log.info("Instantiating model")
-    n_users = train["user"].nunique()
-    n_items = train["item"].nunique()
-    model = hydra.utils.instantiate(cfg.model, n_users=n_users, n_items=n_items)
+    model_params = {
+        "n_users": stats["train_n_users"],
+        "n_items": stats["train_n_items"],
+    }
+    model = hydra.utils.instantiate(cfg.model, **model_params)
     summary(model.net)
-    log.info("Instantiating model - success!")
+    log.info("Model instantiated successfully!")
 
     log.info("Instantiating callbacks")
     callbacks = []
     for _, cb_cfg in cfg.callbacks.items():
         if isinstance(cb_cfg, DictConfig) and "_target_" in cb_cfg:
             callbacks.append(hydra.utils.instantiate(cb_cfg))
-    log.info("Instantiating callbacks - success!")
+    log.info("Callbacks instantiated successfully!")
 
     log.info("Instantiating trainer")
     trainer = hydra.utils.instantiate(cfg.trainer, callbacks=callbacks)
-    log.info("Instantiating trainer - success!")
+    log.info("Trainer instantiated successfully!")
 
     log.info("Training")
     trainer.fit(model=model, datamodule=datamodule)
-    log.info("Training - success!")
+    log.info("Model trained successfully!")
 
 
 if __name__ == "__main__":

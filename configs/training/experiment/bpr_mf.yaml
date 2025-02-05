@@ -1,18 +1,18 @@
 # @package _global_
 
 defaults:
-  - override /datamodule: bpr
-  - override /model: bpr_mf
+  - override /datamodule: bpr.yaml
+  - override /model: bpr_mf.yaml
 
 datamodule:
-  batch_size: 8192
-  num_workers: 8
+  num_workers: 7
   pin_memory: true
 
 model:
-  embed_size: 32
-  lr: 0.0001
+  embed_size: 128
+  lr: 0.001
 
 trainer:
   accelerator: "gpu"
-  max_epochs: 50
+  devices: 1
+  max_epochs: 5

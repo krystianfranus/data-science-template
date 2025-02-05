@@ -13,19 +13,22 @@ log = logging.getLogger(__name__)
 
 
 @hydra.main(
-    config_path=str(get_project_root() / "configs"),
+    config_path=str(get_project_root() / "configs" / "data_processing"),
     config_name="config",
     version_base=None,
 )
 def main(cfg: DictConfig) -> None:
+    data_processing_method_name = cfg.method._target_.split(".")[-1]
+
     output_uri = None
     if cfg.use_remote_storage:
         output_uri = "s3://kf-north-bucket/data-science-template/output/"
 
     task = Task.init(
-        project_name="MyProject",
+        project_name=cfg.project_name,
         task_name="DataProcessing",
         task_type=TaskTypes.data_processing,
+        tags=[data_processing_method_name],
         reuse_last_task_id=False,
         output_uri=output_uri,
     )
@@ -34,10 +37,9 @@ def main(cfg: DictConfig) -> None:
     interactions, impressions = load_raw_data()
     log.info("Raw data (CW10M) loaded successfully!")
 
-    data_processing_method_name = cfg.data_processing["_target_"].split(".")[-1]
     log.info(f"Processing raw data using '{data_processing_method_name}' method")
     train, val, test, stats, user_mapper, item_mapper = hydra.utils.call(
-        cfg.data_processing,
+        cfg.method,
         interactions=interactions,
         impressions=impressions,
     )

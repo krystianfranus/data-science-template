@@ -2,10 +2,10 @@ from itertools import islice
 
 import pandas as pd
 import torch
-from torch.utils.data import Dataset, IterableDataset
+from torch.utils.data import Dataset, IterableDataset, Sampler
 
 
-class TrainDataset(Dataset):
+class SimpleDataset(Dataset):
     def __init__(self, data: pd.DataFrame):
         self.users = torch.tensor(data["user"].to_numpy())
         self.items = torch.tensor(data["item"].to_numpy())
@@ -16,6 +16,46 @@ class TrainDataset(Dataset):
 
     def __getitem__(self, idx: int):
         return self.users[idx], self.items[idx], self.targets[idx]
+
+
+class UserGroupedDataset(Dataset):
+    def __init__(self, data: pd.DataFrame):
+        self.data = data
+        self.unique_users = list(self.data["user"].unique())
+        self.user_groups = {
+            user: data[data["user"] == user].index.tolist()
+            for user in self.unique_users
+        }  # indices per user
+
+    def __len__(self):
+        return len(self.unique_users)
+
+    def __getitem__(self, idx):
+        user = self.unique_users[idx]  # Get user at index
+        user_indices = self.user_groups[user]  # Get all rows for this user
+        user_data = self.data.iloc[user_indices]  # Fetch data for this user
+
+        users = torch.tensor(user_data["user"].to_numpy())
+        items = torch.tensor(user_data["item"].to_numpy())
+        targets = torch.tensor(user_data["target"].to_numpy(), dtype=torch.float32)
+        return users, items, targets  # Return user-wise batch
+
+
+class UserBatchSampler(Sampler):
+    def __init__(self, dataset):
+        self.unique_users = dataset.unique_users
+
+    def __iter__(self):
+        for i in range(len(self.unique_users)):
+            yield [i]  # Yield dataset indices for each user
+
+    def __len__(self):
+        return len(self.unique_users)
+
+
+def collate_fn(batch):
+    users, items, targets = zip(*batch)
+    return users[0], items[0], targets[0]
 
 
 class CustomIterableDataset(IterableDataset):

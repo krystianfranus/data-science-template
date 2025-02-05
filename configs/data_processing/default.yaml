@@ -1,3 +1,0 @@
-_target_: mypackage.data_processing.data_processing.process_default
-n_user_clicks: 10
-n_item_clicks: 10

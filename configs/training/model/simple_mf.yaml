@@ -1,5 +1,5 @@
 _target_: mypackage.training.models.task.SimpleMFTask
 n_users: ???
 n_items: ???
-embed_size: ???
-lr: ???
+embed_size: 63
+lr: 0.001
