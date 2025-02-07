@@ -47,32 +47,17 @@ def process_simple(
     train = interactions[interactions["timestamp"] < split_date]
     val = interactions[interactions["timestamp"] >= split_date]
 
-    # Keep train users with condition 0 < mean_target < 1
-    train_active_users = (
-        train.groupby("user")
+    # Keep lists with condition 0 < mean_target < 1
+    train_valid_lists = (
+        train.groupby("list_id")
         .agg({"target": "mean"})
         .rename(columns={"target": "mean"})
         .reset_index()
     )
-    train_active_users = train_active_users[
-        (train_active_users["mean"] > 0) & (train_active_users["mean"] < 1)
+    train_valid_lists = train_valid_lists[
+        (train_valid_lists["mean"] > 0) & (train_valid_lists["mean"] < 1)
     ]
-    train = train.merge(train_active_users, "inner", "user")
-
-    # Limit val users to these who occured in train data and also keep val users with 0 < mean_target < 1
-    # This way val users is a subset of train users (no cold users in val!)
-    # and we have train users with number of clicks at least 1 and val users with number of clicks at least 2
-    # val = val.merge(train_active_users, "inner", "user")
-    val_active_users = (
-        val.groupby("user")
-        .agg({"target": "mean"})
-        .rename(columns={"target": "mean"})
-        .reset_index()
-    )
-    val_active_users = val_active_users[
-        (val_active_users["mean"] > 0) & (val_active_users["mean"] < 1)
-    ]
-    val = val.merge(val_active_users, "inner", "user")
+    train = train.merge(train_valid_lists, "inner", "list_id")
 
     # Prepare user/item to idx mappers based on train data
     unique_train_users = train["user"].unique()
@@ -84,20 +69,32 @@ def process_simple(
         {"item": unique_train_items, "item_idx": np.arange(unique_train_items.size)}
     )
 
-    # Map user/item to idx
+    # Map user/item to idx - it removes cold users and items from validation
     train = train.merge(user_mapper, on="user", how="inner")
     train = train.merge(item_mapper, on="item", how="inner")
     val = val.merge(user_mapper, on="user", how="inner")
     val = val.merge(item_mapper, on="item", how="inner")
 
+    # Keep lists with condition 0 < mean_target < 1
+    val_valid_lists = (
+        val.groupby("list_id")
+        .agg({"target": "mean"})
+        .rename(columns={"target": "mean"})
+        .reset_index()
+    )
+    val_valid_lists = val_valid_lists[
+        (val_valid_lists["mean"] > 0) & (val_valid_lists["mean"] < 1)
+    ]
+    val = val.merge(val_valid_lists, "inner", "list_id")
+
     train = train.sort_values("timestamp").reset_index(drop=True)
     val = val.sort_values("timestamp").reset_index(drop=True)
 
     # Select valid columns
-    train = train[["timestamp", "user_idx", "item_idx", "target"]]
-    train.columns = ["timestamp", "user", "item", "target"]
-    val = val[["timestamp", "user_idx", "item_idx", "target"]]
-    val.columns = ["timestamp", "user", "item", "target"]
+    train = train[["timestamp", "list_id", "user_idx", "item_idx", "target"]]
+    train.columns = ["timestamp", "list_id", "user", "item", "target"]
+    val = val[["timestamp", "list_id", "user_idx", "item_idx", "target"]]
+    val.columns = ["timestamp", "list_id", "user", "item", "target"]
 
     # Mock test_data
     test = val.copy()  # test set == validation set (should be changed in the future!)
@@ -108,11 +105,13 @@ def process_simple(
     stats = {}
     stats["train_n_users"] = unique_train_users.size
     stats["train_n_items"] = unique_train_items.size
+    stats["train_n_lists"] = train["list_id"].nunique()
     stats["train_n_clicks"] = int(train["target"].sum())
     stats["train_n_impressions"] = len(train) - stats["train_n_clicks"]
     stats["train_ctr"] = stats["train_n_clicks"] / stats["train_n_impressions"]
     stats["val_n_users"] = unique_val_users.size
     stats["val_n_items"] = unique_val_items.size
+    stats["val_n_lists"] = val["list_id"].nunique()
     stats["val_n_clicks"] = int(val["target"].sum())
     stats["val_n_impressions"] = len(val) - stats["val_n_clicks"]
     stats["val_ctr"] = stats["val_n_clicks"] / stats["val_n_impressions"]
@@ -133,17 +132,6 @@ def process_bpr(
     tmp1 = train.loc[train["target"] == 1, ["user", "item"]]
     train = tmp0.merge(tmp1, "inner", "user", suffixes=("_neg", "_pos"))
     val = interactions[interactions["timestamp"] >= split_date]
-
-    val_active_users = (
-        val.groupby("user")
-        .agg({"target": "mean"})
-        .rename(columns={"target": "mean"})
-        .reset_index()
-    )
-    val_active_users = val_active_users[
-        (val_active_users["mean"] > 0) & (val_active_users["mean"] < 1)
-    ]
-    val = val.merge(val_active_users, "inner", "user")
 
     # Prepare user/item to idx mappers based on train data
     unique_train_users = train["user"].unique()
@@ -175,9 +163,21 @@ def process_bpr(
 
     val = val.merge(user_mapper, on="user", how="inner")
     val = val.merge(item_mapper, on="item", how="inner")
-    val = val[["user_idx", "item_idx", "target"]].rename(
-        columns={"user_idx": "user", "item_idx": "item"}
+
+    # Keep lists with condition 0 < mean_target < 1
+    val_valid_lists = (
+        val.groupby("list_id")
+        .agg({"target": "mean"})
+        .rename(columns={"target": "mean"})
+        .reset_index()
     )
+    val_valid_lists = val_valid_lists[
+        (val_valid_lists["mean"] > 0) & (val_valid_lists["mean"] < 1)
+    ]
+    val = val.merge(val_valid_lists, "inner", "list_id")
+
+    val = val[["timestamp", "list_id", "user_idx", "item_idx", "target"]]
+    val = val.rename(columns={"user_idx": "user", "item_idx": "item"})
 
     # Mock test_data
     test = val.copy()  # test set == validation set (to change in the future!)
@@ -190,6 +190,7 @@ def process_bpr(
     stats["train_n_items"] = unique_train_items.size
     stats["val_n_users"] = unique_val_users.size
     stats["val_n_items"] = unique_val_items.size
+    stats["val_n_lists"] = val["list_id"].nunique()
     stats["val_n_clicks"] = int(val["target"].sum())
     stats["val_n_impressions"] = len(val) - stats["val_n_clicks"]
     stats["val_ctr"] = stats["val_n_clicks"] / stats["val_n_impressions"]
@@ -257,6 +258,11 @@ def _common(
     # Join positive interactions (clicks) with negative interactions (impressions)
     interactions = interactions.merge(impressions_dl, "inner", "recommendation_id")
 
+    # Create unique id per (recommandation_id, user_id) pairs
+    interactions["list_id"] = pd.factorize(
+        interactions[["recommendation_id", "user_id"]].apply(tuple, axis=1)
+    )[0]
+
     # Mark positive interactions with 1 and negative with 0
     interactions["target"] = np.where(
         interactions["series_id"] == interactions["recommended_series_list"],
@@ -266,8 +272,14 @@ def _common(
     interactions["target"] = interactions["target"].astype("int32")
 
     interactions = interactions[
-        ["utc_ts_milliseconds", "user_id", "recommended_series_list", "target"]
+        [
+            "utc_ts_milliseconds",
+            "list_id",
+            "user_id",
+            "recommended_series_list",
+            "target",
+        ]
     ]
-    interactions.columns = ["timestamp", "user", "item", "target"]
+    interactions.columns = ["timestamp", "list_id", "user", "item", "target"]
 
     return interactions

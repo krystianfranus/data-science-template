@@ -7,6 +7,7 @@ from torch.utils.data import Dataset, IterableDataset, Sampler
 
 class SimpleDataset(Dataset):
     def __init__(self, data: pd.DataFrame):
+        self.list_ids = torch.tensor(data["list_id"].to_numpy())
         self.users = torch.tensor(data["user"].to_numpy())
         self.items = torch.tensor(data["item"].to_numpy())
         self.targets = torch.tensor(data["target"].to_numpy(), dtype=torch.float32)
@@ -15,47 +16,48 @@ class SimpleDataset(Dataset):
         return len(self.users)
 
     def __getitem__(self, idx: int):
-        return self.users[idx], self.items[idx], self.targets[idx]
+        return self.list_ids[idx], self.users[idx], self.items[idx], self.targets[idx]
 
 
-class UserGroupedDataset(Dataset):
+class ListGroupedDataset(Dataset):
     def __init__(self, data: pd.DataFrame):
         self.data = data
-        self.unique_users = list(self.data["user"].unique())
-        self.user_groups = {
-            user: data[data["user"] == user].index.tolist()
-            for user in self.unique_users
-        }  # indices per user
+        self.unique_list_ids = list(self.data["list_id"].unique())
+        self.list_id_groups = {
+            list_id: data[data["list_id"] == list_id].index.tolist()
+            for list_id in self.unique_list_ids
+        }  # indices per list_id
 
     def __len__(self):
-        return len(self.unique_users)
+        return len(self.unique_list_ids)
 
     def __getitem__(self, idx):
-        user = self.unique_users[idx]  # Get user at index
-        user_indices = self.user_groups[user]  # Get all rows for this user
-        user_data = self.data.iloc[user_indices]  # Fetch data for this user
+        list_id = self.unique_list_ids[idx]  # Get list_id at index
+        list_id_indices = self.list_id_groups[list_id]  # Get all rows for this list_id
+        list_id_data = self.data.iloc[list_id_indices]  # Fetch data for this list_id
 
-        users = torch.tensor(user_data["user"].to_numpy())
-        items = torch.tensor(user_data["item"].to_numpy())
-        targets = torch.tensor(user_data["target"].to_numpy(), dtype=torch.float32)
-        return users, items, targets  # Return user-wise batch
+        list_ids = torch.tensor(list_id_data["list_id"].to_numpy())
+        users = torch.tensor(list_id_data["user"].to_numpy())
+        items = torch.tensor(list_id_data["item"].to_numpy())
+        targets = torch.tensor(list_id_data["target"].to_numpy(), dtype=torch.float32)
+        return list_ids, users, items, targets  # Return user-wise batch
 
 
-class UserBatchSampler(Sampler):
+class ListBatchSampler(Sampler):
     def __init__(self, dataset):
-        self.unique_users = dataset.unique_users
+        self.unique_list_ids = dataset.unique_list_ids
 
     def __iter__(self):
-        for i in range(len(self.unique_users)):
-            yield [i]  # Yield dataset indices for each user
+        for i in range(len(self.unique_list_ids)):
+            yield [i]  # Yield dataset indices for each list_id
 
     def __len__(self):
-        return len(self.unique_users)
+        return len(self.unique_list_ids)
 
 
 def collate_fn(batch):
-    users, items, targets = zip(*batch)
-    return users[0], items[0], targets[0]
+    list_ids, users, items, targets = zip(*batch)
+    return list_ids[0], users[0], items[0], targets[0]
 
 
 class CustomIterableDataset(IterableDataset):

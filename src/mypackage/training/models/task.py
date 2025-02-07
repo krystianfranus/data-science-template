@@ -38,10 +38,10 @@ class SimpleMFTask(LightningModule):
         return self.predict(users, items)
 
     def step(self, batch):
-        users, items, targets_true = batch
+        list_ids, users, items, targets_true = batch
         targets_pred = self.net(users, items)
         loss = self.criterion(targets_pred, targets_true)
-        return loss, targets_true, targets_pred, users
+        return loss, targets_true, targets_pred, list_ids
 
     def training_step(self, batch, batch_idx):
         loss, *_ = self.step(batch)
@@ -62,16 +62,18 @@ class SimpleMFTask(LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        loss, targets_true, targets_pred, users = self.step(batch)
+        loss, targets_true, targets_pred, list_ids = self.step(batch)
         self.log("loss/val", loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.val_step_outputs.append((targets_pred, targets_true, users))
+        self.val_step_outputs.append((targets_pred, targets_true, list_ids))
 
     def on_validation_epoch_end(self):
         # https://github.com/Lightning-AI/lightning/pull/16520
-        targets_pred, targets_true, users = map(torch.cat, zip(*self.val_step_outputs))
+        targets_pred, targets_true, list_ids = map(
+            torch.cat, zip(*self.val_step_outputs)
+        )
 
-        self.val_ndcg(targets_pred, targets_true, indexes=users)
-        self.val_auroc(targets_pred, targets_true, indexes=users)
+        self.val_ndcg(targets_pred, targets_true, indexes=list_ids)
+        self.val_auroc(targets_pred, targets_true, indexes=list_ids)
         self.log("ndcg/val", self.val_ndcg, prog_bar=True)
         self.log("auroc/val", self.val_auroc, prog_bar=True)
         self.val_step_outputs.clear()
@@ -115,10 +117,10 @@ class SimpleMLPTask(LightningModule):
         return self.predict(users, items)
 
     def step(self, batch: Any):
-        users, items, targets_true = batch
+        list_ids, users, items, targets_true = batch
         targets_pred = self.net(users, items)
         loss = self.criterion(targets_pred, targets_true)
-        return loss, targets_true, targets_pred, users
+        return loss, targets_true, targets_pred, list_ids
 
     def training_step(self, batch, batch_idx):
         if batch_idx == 0:
@@ -152,16 +154,18 @@ class SimpleMLPTask(LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        loss, targets_true, targets_pred, users = self.step(batch)
+        loss, targets_true, targets_pred, list_ids = self.step(batch)
         self.log("loss/val", loss, on_step=False, on_epoch=True, prog_bar=False)
-        self.val_step_outputs.append((targets_pred, targets_true, users))
+        self.val_step_outputs.append((targets_pred, targets_true, list_ids))
 
     def on_validation_epoch_end(self):
         # https://github.com/Lightning-AI/lightning/pull/16520
-        targets_pred, targets_true, users = map(torch.cat, zip(*self.val_step_outputs))
+        targets_pred, targets_true, list_ids = map(
+            torch.cat, zip(*self.val_step_outputs)
+        )
 
-        self.val_ndcg(targets_pred, targets_true, indexes=users)
-        self.val_auroc(targets_pred, targets_true, indexes=users)
+        self.val_ndcg(targets_pred, targets_true, indexes=list_ids)
+        self.val_auroc(targets_pred, targets_true, indexes=list_ids)
         self.log("ndcg/val", self.val_ndcg, prog_bar=True)
         self.log("auroc/val", self.val_auroc, prog_bar=True)
         self.val_step_outputs.clear()
@@ -242,19 +246,21 @@ class BPRMFTask(LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        users, items, targets_true = batch
+        list_ids, users, items, targets_true = batch
         targets_pred = self.forward(users, items)
         loss = self.criterion(
             targets_pred, targets_true
         )  # TODO: THIS IS INCORRECT LOSS COMPUTATION
         self.log("loss/val", loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.val_step_outputs.append((targets_pred, targets_true, users))
+        self.val_step_outputs.append((targets_pred, targets_true, list_ids))
 
     def on_validation_epoch_end(self):
         # https://github.com/Lightning-AI/lightning/pull/16520
-        targets_pred, targets_true, users = map(torch.cat, zip(*self.val_step_outputs))
-        self.val_ndcg(targets_pred, targets_true, indexes=users)
-        self.val_auroc(targets_pred, targets_true, indexes=users)
+        targets_pred, targets_true, list_ids = map(
+            torch.cat, zip(*self.val_step_outputs)
+        )
+        self.val_ndcg(targets_pred, targets_true, indexes=list_ids)
+        self.val_auroc(targets_pred, targets_true, indexes=list_ids)
         self.log("ndcg/val", self.val_ndcg, prog_bar=True)
         self.log("auroc/val", self.val_auroc, prog_bar=True)
         self.val_step_outputs.clear()
@@ -332,19 +338,21 @@ class BPRMLPTask(LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        users, items, targets_true = batch
+        list_ids, users, items, targets_true = batch
         targets_pred = self.forward(users, items)
         loss = self.criterion(
             targets_pred, targets_true
         )  # TODO: THIS IS INCORRECT LOSS COMPUTATION FOR VALIDATION
         self.log("loss/val", loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.val_step_outputs.append((targets_pred, targets_true, users))
+        self.val_step_outputs.append((targets_pred, targets_true, list_ids))
 
     def on_validation_epoch_end(self):
         # https://github.com/Lightning-AI/lightning/pull/16520
-        targets_pred, targets_true, users = map(torch.cat, zip(*self.val_step_outputs))
-        self.val_ndcg(targets_pred, targets_true, indexes=users)
-        self.val_auroc(targets_pred, targets_true, indexes=users)
+        targets_pred, targets_true, list_ids = map(
+            torch.cat, zip(*self.val_step_outputs)
+        )
+        self.val_ndcg(targets_pred, targets_true, indexes=list_ids)
+        self.val_auroc(targets_pred, targets_true, indexes=list_ids)
         self.log("ndcg/val", self.val_ndcg, prog_bar=True)
         self.log("auroc/val", self.val_auroc, prog_bar=True)
         self.val_step_outputs.clear()

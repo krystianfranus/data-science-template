@@ -27,11 +27,11 @@ class SimpleDataModule(pl.LightningDataModule):
         if stage == "fit":
             self.train_dataset = SimpleDataset(self.hparams.train)
             self.val_dataset = SimpleDataset(self.hparams.val)
-            # self.val_dataset = UserGroupedDataset(self.hparams.val)
+            # self.val_dataset = ListGroupedDataset(self.hparams.val)
 
         if stage == "test":
             self.test_dataset = SimpleDataset(self.hparams.test)
-            # self.test_dataset = UserGroupedDataset(self.hparams.test)
+            # self.test_dataset = ListGroupedDataset(self.hparams.test)
 
     def train_dataloader(self):
         return DataLoader(
@@ -52,7 +52,7 @@ class SimpleDataModule(pl.LightningDataModule):
         )
         # return DataLoader(
         #     dataset=self.val_dataset,
-        #     batch_sampler=UserBatchSampler(self.val_dataset),
+        #     batch_sampler=ListBatchSampler(self.val_dataset),
         #     collate_fn=collate_fn,
         #     num_workers=self.hparams.num_workers,
         #     pin_memory=self.hparams.pin_memory,

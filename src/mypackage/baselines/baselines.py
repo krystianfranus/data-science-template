@@ -46,7 +46,7 @@ def _common(stats_per_item: DataFrame, val: DataFrame):
     val = val.merge(stats_per_item, "inner", "item")
 
     # Compute aucroc and ndcg for different scenarios
-    indexes = torch.tensor(val["user"])
+    indexes = torch.tensor(val["list_id"])
     targets = torch.tensor(val["target"])
     worst_preds = torch.tensor((val["target"] + 1) % 2, dtype=torch.float32)
     random_preds = torch.rand(val.shape[0])
