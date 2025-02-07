@@ -1,14 +1,14 @@
 defaults:
-  - _self_
   - override hydra/job_logging: custom
+  - _self_  # Primary config overrides values of configs from the Defaults List
 
 hydra:
   output_subdir: null
   run:
     dir: .
 
+project_name: "MyProject"
+training_task_id: null
 model_type: "simple_mlp"  # simple_mlp, simple_mf, bpr_mlp, bpr_mf
-draft_mode: false
-prev_task_id: null
 num_workers: 8
 pin_memory: true

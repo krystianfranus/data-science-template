@@ -28,22 +28,22 @@ log = logging.getLogger(__name__)
     version_base=None,
 )
 def main(cfg: DictConfig) -> None:
-    task = Task.init(
-        project_name="MyProject",
+    task_training = Task.get_task(
+        task_id=cfg.training_task_id,
+        project_name=cfg.project_name,
+        task_name="Training",
+    )
+
+    Task.init(
+        project_name=cfg.project_name,
         task_name="Inference",
         task_type=TaskTypes.inference,
         reuse_last_task_id=False,
-        output_uri=None,
+        output_uri=task_training.output_uri,
     )
-    if cfg.draft_mode:
-        task.execute_remotely()
-
-    task_prev = Task.get_task(project_name="MyProject", task_name="Training")
-    if cfg.prev_task_id is not None:
-        task_prev = Task.get_task(task_id=cfg.prev_task_id)
 
     log.info("Loading model")
-    ckpt_path = task_prev.models["output"][-1].get_local_copy()
+    ckpt_path = task_training.models["output"][-1].get_local_copy()
     match cfg.model_type:
         case "simple_mlp":
             model = SimpleMLPTask.load_from_checkpoint(ckpt_path)
