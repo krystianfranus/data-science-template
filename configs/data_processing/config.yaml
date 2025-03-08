@@ -1,6 +1,4 @@
 defaults:
-  - method: simple
-
   - override hydra/job_logging: custom
   - _self_  # Primary config overrides values of configs from the Defaults List
 
@@ -10,4 +8,7 @@ hydra:
     dir: .
 
 project_name: "MyProject"
-use_remote_storage: false
+tags: ["${now:%Y-%m-%d}"]
+list_size: 5
+split_date: "2019/04/09"
+history_size: 5
