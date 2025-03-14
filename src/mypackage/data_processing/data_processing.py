@@ -169,7 +169,7 @@ def save_data(
         item_mapper (DataFrame): Item-to-index mapping.
     """
     task.upload_artifact("train", train, extension_name=".parquet")
-    task.upload_artifact("val", val, extension_name=".parquet")
+    task.upload_artifact("validation", val, extension_name=".parquet")
     task.upload_artifact("user_mapper", user_mapper, extension_name=".parquet")
     task.upload_artifact("item_mapper", item_mapper, extension_name=".parquet")
 

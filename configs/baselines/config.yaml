@@ -1,6 +1,4 @@
 defaults:
-  - method: simple
-  
   - override hydra/job_logging: custom
   - _self_  # Primary config overrides values of configs from the Defaults List
 
@@ -10,4 +8,5 @@ hydra:
     dir: .
 
 project_name: "MyProject"
+tags: ["${now:%Y-%m-%d}"]
 data_processing_task_id: null

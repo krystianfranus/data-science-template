@@ -5,7 +5,27 @@ from pandas import DataFrame
 from torchmetrics.retrieval import RetrievalAUROC, RetrievalNormalizedDCG
 
 
-def compute_baselines_simple(train: DataFrame, val: DataFrame) -> None:
+def evaluate_baselines(train: DataFrame, val: DataFrame) -> None:
+    """
+    Computes metrics (AUROC & NDCG) for baseline approaches to recommendations.
+
+    This function calculates performance metrics for a recommender system
+    using various prediction strategies. It evaluates models based on random guessing,
+    worst-case predictions, popularity-based approaches (by click count and CTR), and
+    an ideal model. The function then logs these results along with item popularity
+    statistics.
+
+    Args:
+        train (DataFrame): The training dataset containing item interaction data.
+        val (DataFrame): The validation dataset used for evaluation.
+
+    Returns:
+        None: The function logs results but does not return any values.
+
+    Logs:
+        - A table comparing AUROC and NDCG scores for different baseline models.
+        - A table showing the top 20 and bottom 20 most popular items based on click count.
+    """
     stats_per_item = (
         train.groupby("item")
         .agg({"target": ["sum", "mean"]})
@@ -13,39 +33,9 @@ def compute_baselines_simple(train: DataFrame, val: DataFrame) -> None:
         .rename(columns={"sum": "n_clicks", "mean": "ctr"})
         .reset_index()
     )
-
-    _common(stats_per_item, val)
-
-
-def compute_baselines_bpr(train: DataFrame, val: DataFrame) -> None:
-    clicks_per_user = train[["user", "item_pos"]].drop_duplicates()
-    stats_pos = (
-        clicks_per_user.groupby("item_pos")
-        .count()
-        .reset_index()
-        .rename(columns={"item_pos": "item", "user": "n_clicks"})
-    )
-
-    impressions_per_user = train[["user", "item_neg"]].drop_duplicates()
-    stats_neg = (
-        impressions_per_user.groupby("item_neg")
-        .count()
-        .reset_index()
-        .rename(columns={"item_neg": "item", "user": "n_impressions"})
-    )
-
-    stats_per_item = stats_pos.merge(stats_neg, "inner", "item")
-    stats_per_item["ctr"] = stats_per_item["n_clicks"] / (
-        stats_per_item["n_clicks"] + stats_per_item["n_impressions"]
-    )
-
-    _common(stats_per_item, val)
-
-
-def _common(stats_per_item: DataFrame, val: DataFrame):
     val = val.merge(stats_per_item, "inner", "item")
 
-    # Compute aucroc and ndcg for different scenarios
+    # Compute aucroc and ndcg for various strategies
     indexes = torch.tensor(val["list_id"])
     targets = torch.tensor(val["target"])
     worst_preds = torch.tensor((val["target"] + 1) % 2, dtype=torch.float32)
@@ -54,14 +44,14 @@ def _common(stats_per_item: DataFrame, val: DataFrame):
     top_ctr_preds = torch.tensor(val["ctr"])
     best_preds = torch.tensor(val["target"], dtype=torch.float32)
 
-    auroc = RetrievalAUROC(empty_target_action="skip")
+    auroc = RetrievalAUROC(empty_target_action="error")
     worst_auroc = auroc(worst_preds, targets, indexes=indexes).item()
     random_auroc = auroc(random_preds, targets, indexes=indexes).item()
     top_clicks_auroc = auroc(top_clicks_preds, targets, indexes=indexes).item()
     top_ctr_auroc = auroc(top_ctr_preds, targets, indexes=indexes).item()
     best_auroc = auroc(best_preds, targets, indexes=indexes).item()
 
-    ndcg = RetrievalNormalizedDCG(empty_target_action="skip")
+    ndcg = RetrievalNormalizedDCG(empty_target_action="error")
     worst_ndcg = ndcg(worst_preds, targets, indexes=indexes).item()
     random_ndcg = ndcg(random_preds, targets, indexes=indexes).item()
     top_clicks_ndcg = ndcg(top_clicks_preds, targets, indexes=indexes).item()
@@ -100,21 +90,6 @@ def _common(stats_per_item: DataFrame, val: DataFrame):
     )
     Logger.current_logger().report_table(
         "Items popularity (based on #clicks)",
-        "Bottom 20",
-        iteration=0,
-        table_plot=tmp[-20:],
-    )
-
-    # Log top20 and bottom20 items based on popularity(by ctr)
-    tmp = stats_per_item.sort_values("ctr", ascending=False).reset_index(drop=True)
-    Logger.current_logger().report_table(
-        "Items popularity (based on ctr)",
-        "Top 20",
-        iteration=0,
-        table_plot=tmp[:20],
-    )
-    Logger.current_logger().report_table(
-        "Items popularity (based on ctr)",
         "Bottom 20",
         iteration=0,
         table_plot=tmp[-20:],
