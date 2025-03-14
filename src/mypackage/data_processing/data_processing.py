@@ -48,8 +48,8 @@ def process_data(
     impressions: DataFrame,
     list_size: int,
     split_date: str,
-    history_size: int,
-) -> tuple[DataFrame, DataFrame, DataFrame, dict]:
+    user_history_size: int,
+) -> tuple[DataFrame, DataFrame, DataFrame, DataFrame]:
     """
     Process and clean raw interaction and impression data, splitting it into training and validation sets.
 
@@ -58,10 +58,10 @@ def process_data(
         impressions (DataFrame): Raw impressions data.
         list_size (int): Minimum list size to be included in the dataset.
         split_date (str): Date string to split train and validation sets (format: YYYY/MM/DD).
-        history_size (int): Number of past clicks to store as user history.
+        user_history_size (int): Number of past clicks to store as user history.
 
     Returns:
-        tuple[DataFrame, DataFrame, DataFrame, dict]:
+        tuple[DataFrame, DataFrame, DataFrame, DataFrame]:
             - Processed training dataset.
             - Processed validation dataset.
             - User-to-index mapping DataFrame.
@@ -123,11 +123,11 @@ def process_data(
         result = []
         for item in series:
             result.append(history.copy())  # Append the current state of history
-            if len(history) == history_size:
+            if len(history) == user_history_size:
                 history.pop(0)  # Keep only the last n items
             history.append(item)
         # Pad with None if history is shorter than threshold
-        return [([None] * (history_size - len(h)) + h) for h in result]
+        return [([None] * (user_history_size - len(h)) + h) for h in result]
 
     # Apply function per user
     train_clicks["user_history"] = train_clicks.groupby("user")["item"].transform(

@@ -40,7 +40,7 @@ def main(cfg: DictConfig) -> None:
         impressions,
         cfg.list_size,
         cfg.split_date,
-        cfg.history_size,
+        cfg.user_history_size,
     )
     log.info("Raw data processed successfully!")
 

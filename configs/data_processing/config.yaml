@@ -11,4 +11,4 @@ project_name: "MyProject"
 tags: ["${now:%Y-%m-%d}"]
 list_size: 5
 split_date: "2019/04/09"
-history_size: 5
+user_history_size: 5
