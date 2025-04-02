@@ -1,9 +1,0 @@
-_target_: mypackage.training.models.task.BPRMLPTask
-n_users: ???
-n_items: ???
-embed_size: 64
-n_layers: 3
-dropout: 0.5
-lr1: 0.001
-lr2: 0.001
-weight_decay: 0.0

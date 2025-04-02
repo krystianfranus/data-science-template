@@ -16,4 +16,5 @@ hydra:
     dir: .
 
 project_name: "MyProject"
+tags: ["${now:%Y-%m-%d}"]
 data_processing_task_id: null

@@ -1,22 +1,32 @@
-from itertools import islice
+# from itertools import islice
 
+import numpy as np
 import pandas as pd
 import torch
-from torch.utils.data import Dataset, IterableDataset, Sampler
+
+# from torch.utils.data import IterableDataset
+from torch.utils.data import Dataset, Sampler
 
 
 class SimpleDataset(Dataset):
     def __init__(self, data: pd.DataFrame):
         self.list_ids = torch.tensor(data["list_id"].to_numpy())
-        self.users = torch.tensor(data["user"].to_numpy())
-        self.items = torch.tensor(data["item"].to_numpy())
+        self.users = torch.tensor(data["user_idx"].to_numpy())
+        self.items = torch.tensor(data["item_idx"].to_numpy())
         self.targets = torch.tensor(data["target"].to_numpy(), dtype=torch.float32)
+        self.user_history = torch.from_numpy(np.array(data["user_history"].tolist()))
 
     def __len__(self):
         return len(self.users)
 
     def __getitem__(self, idx: int):
-        return self.list_ids[idx], self.users[idx], self.items[idx], self.targets[idx]
+        return (
+            self.list_ids[idx],
+            self.users[idx],
+            self.items[idx],
+            self.targets[idx],
+            self.user_history[idx],
+        )
 
 
 class ListGroupedDataset(Dataset):
@@ -37,10 +47,13 @@ class ListGroupedDataset(Dataset):
         list_id_data = self.data.iloc[list_id_indices]  # Fetch data for this list_id
 
         list_ids = torch.tensor(list_id_data["list_id"].to_numpy())
-        users = torch.tensor(list_id_data["user"].to_numpy())
-        items = torch.tensor(list_id_data["item"].to_numpy())
+        users = torch.tensor(list_id_data["user_idx"].to_numpy())
+        items = torch.tensor(list_id_data["item_idx"].to_numpy())
         targets = torch.tensor(list_id_data["target"].to_numpy(), dtype=torch.float32)
-        return list_ids, users, items, targets  # Return user-wise batch
+        user_histories = torch.from_numpy(
+            np.array(list_id_data["user_history"].tolist())
+        )
+        return list_ids, users, items, targets, user_histories  # Return user-wise batch
 
 
 class ListBatchSampler(Sampler):
@@ -56,45 +69,32 @@ class ListBatchSampler(Sampler):
 
 
 def collate_fn(batch):
-    list_ids, users, items, targets = zip(*batch)
-    return list_ids[0], users[0], items[0], targets[0]
+    list_ids, users, items, targets, user_histories = zip(*batch)
+    return list_ids[0], users[0], items[0], targets[0], user_histories[0]
 
 
-class CustomIterableDataset(IterableDataset):
-    def __init__(self, filename):
-        self.filename = filename
+# class CustomIterableDataset(IterableDataset):
+#     def __init__(self, filename):
+#         self.filename = filename
 
-    def _mapper(self, line):
-        user_id, item_id, target = line.strip("\n").split(",")
-        user_id = torch.tensor(int(user_id))
-        item_id = torch.tensor(int(item_id))
-        target = torch.tensor(float(target))
-        return user_id, item_id, target
+#     def _mapper(self, line):
+#         user_id, item_id, target = line.strip("\n").split(",")
+#         user_id = torch.tensor(int(user_id))
+#         item_id = torch.tensor(int(item_id))
+#         target = torch.tensor(float(target))
+#         return user_id, item_id, target
 
-    def __iter__(self):
-        file_itr = open(self.filename)
-        mapped_itr = map(self._mapper, file_itr)
+#     def __iter__(self):
+#         file_itr = open(self.filename)
+#         mapped_itr = map(self._mapper, file_itr)
 
-        worker_info = torch.utils.data.get_worker_info()
-        if worker_info is not None:
-            num_workers = worker_info.num_workers
-            worker_id = worker_info.id
-            mapped_itr = islice(mapped_itr, worker_id, None, num_workers)
+#         worker_info = torch.utils.data.get_worker_info()
+#         if worker_info is not None:
+#             num_workers = worker_info.num_workers
+#             worker_id = worker_info.id
+#             mapped_itr = islice(mapped_itr, worker_id, None, num_workers)
 
-        return mapped_itr
-
-
-class BPRDataset(Dataset):
-    def __init__(self, data: pd.DataFrame):
-        self.users = torch.tensor(data.iloc[:, 0].to_numpy())
-        self.items_neg = torch.tensor(data.iloc[:, 1].to_numpy())
-        self.items_pos = torch.tensor(data.iloc[:, 2].to_numpy())
-
-    def __len__(self):
-        return len(self.users)
-
-    def __getitem__(self, idx: int):
-        return self.users[idx], self.items_neg[idx], self.items_pos[idx]
+#         return mapped_itr
 
 
 class InferDataset(Dataset):

@@ -27,13 +27,13 @@ def evaluate_baselines(train: DataFrame, val: DataFrame) -> None:
         - A table showing the top 20 and bottom 20 most popular items based on click count.
     """
     stats_per_item = (
-        train.groupby("item")
+        train.groupby("item_idx")
         .agg({"target": ["sum", "mean"]})
         .droplevel(0, axis=1)
         .rename(columns={"sum": "n_clicks", "mean": "ctr"})
         .reset_index()
     )
-    val = val.merge(stats_per_item, "inner", "item")
+    val = val.merge(stats_per_item, "inner", "item_idx")
 
     # Compute aucroc and ndcg for various strategies
     indexes = torch.tensor(val["list_id"])

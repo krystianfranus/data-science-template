@@ -114,9 +114,21 @@ def process_data(
         {"item": unique_train_items, "item_idx": np.arange(unique_train_items.size)}
     )
 
+    train = train.merge(user_mapper, "inner", "user", validate="m:1")
+    train = train.merge(item_mapper, "inner", "item", validate="m:1")
+    val = val.merge(user_mapper, "inner", "user", validate="m:1")
+    val = val.merge(item_mapper, "inner", "item", validate="m:1")
+
+    train = train.drop(columns=["user", "item"])
+    train = train[["timestamp", "list_id", "user_idx", "item_idx", "target"]]
+    val = val.drop(columns=["user", "item"])
+    val = val[["timestamp", "list_id", "user_idx", "item_idx", "target"]]
+
     # Create user_history column - list of last n clicked items per user
-    train_clicks = train.sort_values(by=["user", "timestamp"])
+    train_clicks = train.sort_values(by=["user_idx", "timestamp"])
     train_clicks = train_clicks[train_clicks["target"] == 1].reset_index(drop=True)
+
+    idx_of_null_item = len(item_mapper)
 
     def last_clicks(series):
         history = []
@@ -126,23 +138,23 @@ def process_data(
             if len(history) == user_history_size:
                 history.pop(0)  # Keep only the last n items
             history.append(item)
-        # Pad with None if history is shorter than threshold
-        return [([None] * (user_history_size - len(h)) + h) for h in result]
+        # Pad with 'null item' if history is shorter than threshold
+        return [([idx_of_null_item] * (user_history_size - len(h)) + h) for h in result]
 
     # Apply function per user
-    train_clicks["user_history"] = train_clicks.groupby("user")["item"].transform(
-        last_clicks
-    )
+    train_clicks["user_history"] = train_clicks.groupby("user_idx")[
+        "item_idx"
+    ].transform(last_clicks)
     train = train.merge(
-        train_clicks[["timestamp", "user", "user_history"]],
-        on=["timestamp", "user"],
+        train_clicks[["timestamp", "user_idx", "user_history"]],
+        on=["timestamp", "user_idx"],
         how="left",
     )
     tmp = train_clicks.loc[
-        train_clicks.groupby("user")["timestamp"].idxmax()
+        train_clicks.groupby("user_idx")["timestamp"].idxmax()
     ].reset_index(drop=True)
-    tmp = tmp[["user", "user_history"]]
-    val = val.merge(tmp, "inner", "user")
+    tmp = tmp[["user_idx", "user_history"]]
+    val = val.merge(tmp, "inner", "user_idx")
 
     # Sort train and val by timestamp
     train = train.sort_values("timestamp").reset_index(drop=True)

@@ -1,7 +1,6 @@
 import logging
 
 import hydra
-import numpy as np
 from clearml import Task, TaskTypes
 from dotenv import load_dotenv
 from omegaconf import DictConfig
@@ -29,33 +28,29 @@ def main(cfg: DictConfig) -> None:
         project_name=cfg.project_name,
         task_name="Training",
         task_type=TaskTypes.training,
+        tags=cfg.tags,
         reuse_last_task_id=False,
-        output_uri=task_data_processing.output_uri,
     )
 
     log.info("Loading data")
     train = task_data_processing.artifacts["train"].get()
-    val = task_data_processing.artifacts["val"].get()
-    test = task_data_processing.artifacts["test"].get()
-    stats = task_data_processing.artifacts["stats"].get()
+    val = task_data_processing.artifacts["validation"].get()
+    user_mapper = task_data_processing.artifacts["user_mapper"].get()
+    item_mapper = task_data_processing.artifacts["item_mapper"].get()
     log.info("Data loaded successfully!")
 
     log.info("Instantiating datamodule")
-    batch_size = cfg.datamodule.batch_size
-    batch_size = batch_size if batch_size else int(np.sqrt(len(train)))
     datamodule_params = {
         "train": train,
         "val": val,
-        "test": test,
-        "batch_size": batch_size,
     }
     datamodule = hydra.utils.instantiate(cfg.datamodule, **datamodule_params)
     log.info("Datamodule instantiated successfully!")
 
     log.info("Instantiating model")
     model_params = {
-        "n_users": stats["train_n_users"],
-        "n_items": stats["train_n_items"],
+        "n_users": len(user_mapper),
+        "n_items": len(item_mapper),
     }
     model = hydra.utils.instantiate(cfg.model, **model_params)
     summary(model.net)

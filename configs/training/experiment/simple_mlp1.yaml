@@ -9,9 +9,10 @@ datamodule:
   pin_memory: true
 
 model:
-  embed_size: 128
-  n_layers: 4
+  embed_size: 64
+  n_layers: 3
   dropout: 0.5
+  user_history_based: false
   lr1: 0.00005
   lr2: 0.00001
   weight_decay: 0.0
@@ -19,4 +20,8 @@ model:
 trainer:
   accelerator: "gpu"
   devices: 1
-  max_epochs: 10
+  max_epochs: 50
+
+callbacks:
+  early_stopping:
+    patience: 10

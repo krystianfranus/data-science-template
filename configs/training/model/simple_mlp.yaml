@@ -4,6 +4,7 @@ n_items: ???
 embed_size: 64
 n_layers: 3
 dropout: 0.5
+user_history_based: false
 lr1: 0.001
 lr2: 0.001
 weight_decay: 0.0

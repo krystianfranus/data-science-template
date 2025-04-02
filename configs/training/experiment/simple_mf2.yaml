@@ -1,0 +1,24 @@
+# @package _global_
+
+defaults:
+  - override /datamodule: simple.yaml
+  - override /model: simple_mf.yaml
+
+datamodule:
+  num_workers: 7
+  pin_memory: true
+
+model:
+  embed_size: 64
+  user_history_based: true
+  lr: 0.005
+
+trainer:
+  accelerator: "gpu"
+  devices: 1
+  max_epochs: 50
+
+callbacks:
+  early_stopping:
+    patience: 10
+  
