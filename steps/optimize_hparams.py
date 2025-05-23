@@ -1,15 +1,14 @@
 from clearml import Task
-from clearml.automation import (
-    DiscreteParameterRange,
-    GridSearch,
-    HyperParameterOptimizer,
-)
+from clearml.automation import DiscreteParameterRange, HyperParameterOptimizer
+from clearml.automation.optuna import OptimizerOptuna
 from dotenv import load_dotenv
 
 load_dotenv()
 
 
 def main():
+    task_training = Task.get_task(project_name="MyProject", task_name="Training")
+
     Task.init(
         project_name="MyProjectHPO",
         task_name="Automatic Hyper-Parameter Optimization",
@@ -18,7 +17,7 @@ def main():
     )
 
     optimizer = HyperParameterOptimizer(
-        base_task_id=Task.get_task(project_name="MyProject", task_name="Training").id,
+        base_task_id=task_training.id,
         hyper_parameters=[
             # DiscreteParameterRange("Hydra/model.n_factors", values=[8, 16]),
             # DiscreteParameterRange("Hydra/model.n_layers", values=[3, 4]),
@@ -35,10 +34,14 @@ def main():
             DiscreteParameterRange("Hydra/trainer.max_epochs", values=[100]),
         ],
         objective_metric_title="val",
-        objective_metric_series="ndcg",
+        objective_metric_series="auroc",
         objective_metric_sign="max_global",
-        optimizer_class=GridSearch,
+        optimizer_class=OptimizerOptuna,
         max_number_of_concurrent_tasks=1,
+        save_top_k_tasks_only=-1,
+        total_max_jobs=10,
+        min_iteration_per_job=10 * 857,
+        max_iteration_per_job=50 * 857,
         # execution_queue="default",
         spawn_project="MyProjectHPO",
     )
