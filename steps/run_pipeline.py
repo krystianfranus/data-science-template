@@ -5,26 +5,26 @@ load_dotenv()
 
 
 def main():
-    pipe = PipelineController(name="MyPipeline", project="MyProject", version="0.0.1")
+    pipe = PipelineController(name="MyPipeline", project="MyProject", version="0.1.0")
 
     pipe.add_step(
-        name="Preprocessing",
+        name="DataProcessing",
         base_task_project="MyProject",
-        base_task_name="Preprocessing",
+        base_task_name="DataProcessing",
         cache_executed_step=True,
     )
 
     pipe.add_step(
-        name="Baseline",
+        name="BaselinesEvaluation",
         base_task_project="MyProject",
-        base_task_name="Baseline",
+        base_task_name="BaselinesEvaluation",
         cache_executed_step=True,
-        parents=["Preprocessing"],
+        parents=["DataProcessing"],
         parameter_override={
-            "Hydra/prev_task_id": "${Preprocessing.id}"
+            "Hydra/prev_task_id": "${DataProcessing.id}"
         },  # It is preferable
         # parameter_override={
-        #     "Args/overrides": "['prev_task_id=${Preprocessing.id}']"
+        #     "Args/overrides": "['prev_task_id=${DataProcessing.id}']"
         # },  # It also works
     )
 
@@ -33,18 +33,18 @@ def main():
         base_task_project="MyProject",
         base_task_name="Training",
         cache_executed_step=True,
-        parents=["Preprocessing"],
-        parameter_override={"Hydra/prev_task_id": "${Preprocessing.id}"},
+        parents=["DataProcessing"],
+        parameter_override={"Hydra/prev_task_id": "${DataProcessing.id}"},
     )
 
-    pipe.add_step(
-        name="Inference",
-        base_task_project="MyProject",
-        base_task_name="Inference",
-        cache_executed_step=True,
-        parents=["Training"],
-        parameter_override={"Hydra/prev_task_id": "${Training.id}"},
-    )
+    # pipe.add_step(
+    #     name="Inference",
+    #     base_task_project="MyProject",
+    #     base_task_name="Inference",
+    #     cache_executed_step=True,
+    #     parents=["Training"],
+    #     parameter_override={"Hydra/prev_task_id": "${Training.id}"},
+    # )
 
     # for debugging purposes use local jobs
     # pipe.start_locally(run_pipeline_steps_locally=False)
