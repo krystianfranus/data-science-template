@@ -11,12 +11,7 @@ from torch.utils.data import DataLoader
 
 from mypackage import get_project_root
 from mypackage.training.datamodules.dataset import InferDataset
-from mypackage.training.models.task import (
-    BPRMFTask,
-    BPRMLPTask,
-    SimpleMFTask,
-    SimpleMLPTask,
-)
+from mypackage.training.models.task import SimpleMFTask, SimpleMLPTask
 
 load_dotenv()
 log = logging.getLogger(__name__)
@@ -28,6 +23,12 @@ log = logging.getLogger(__name__)
     version_base=None,
 )
 def main(cfg: DictConfig) -> None:
+    task_data_processing = Task.get_task(
+        task_id=cfg.data_processing_task_id,
+        project_name=cfg.project_name,
+        task_name="DataProcessing",
+    )
+
     task_training = Task.get_task(
         task_id=cfg.training_task_id,
         project_name=cfg.project_name,
@@ -38,6 +39,7 @@ def main(cfg: DictConfig) -> None:
         project_name=cfg.project_name,
         task_name="Inference",
         task_type=TaskTypes.inference,
+        tags=cfg.tags,
         reuse_last_task_id=False,
         output_uri=task_training.output_uri,
     )
@@ -49,30 +51,31 @@ def main(cfg: DictConfig) -> None:
             model = SimpleMLPTask.load_from_checkpoint(ckpt_path)
         case "simple_mf":
             model = SimpleMFTask.load_from_checkpoint(ckpt_path)
-        case "bpr_mlp":
-            model = BPRMLPTask.load_from_checkpoint(ckpt_path)
-        case "bpr_mf":
-            model = BPRMFTask.load_from_checkpoint(ckpt_path)
         case _:
             raise ValueError(f"Invalid model type, you provided '{cfg.model_type}'")
-    log.info("Loading model - success!")
+    log.info("Model loaded successfully!")
 
     log.info("Instantiating dataloader")
-    n_users = model.net.embed_user.num_embeddings
-    n_items = model.net.embed_item.num_embeddings
-    dataset = InferDataset(n_users, n_items)
+    user_mapper = task_data_processing.artifacts["user_mapper"].get()
+    item_mapper = task_data_processing.artifacts["item_mapper"].get()
+    last_user_histories = task_data_processing.artifacts["last_user_histories"].get()
+    n_users = len(user_mapper)
+    n_items = len(item_mapper)
+    user_history_based = model.hparams.user_history_based
+
+    dataset = InferDataset(n_users, n_items, user_history_based, last_user_histories)
     dataloader = DataLoader(
         dataset,
         batch_size=n_items,
         num_workers=cfg.num_workers,
         pin_memory=cfg.pin_memory,
     )
-    log.info("Instantiating dataloader - success!")
+    log.info("Dataloader instantiated successfully!")
 
     log.info("Predicting")
     predictions = Trainer(logger=False).predict(model, dataloaders=dataloader)
     predictions = torch.concat(predictions).view(n_users, n_items)
-    log.info("Predicting - success!")
+    log.info("Predicted successfully!")
 
     log.info("Preparing lists with recommendations")
     recs = pd.DataFrame(
@@ -85,7 +88,7 @@ def main(cfg: DictConfig) -> None:
         iteration=0,
         table_plot=recs,
     )
-    log.info("Preparing lists with recommendations - success!")
+    log.info("Lists with recommendations prepared successfully!")
 
 
 if __name__ == "__main__":
