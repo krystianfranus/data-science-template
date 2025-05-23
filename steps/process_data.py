@@ -35,7 +35,7 @@ def main(cfg: DictConfig) -> None:
     log.info("Raw data (CW10M) loaded successfully!")
 
     log.info("Processing raw data")
-    train, val, user_mapper, item_mapper = process_data(
+    train, val, user_mapper, item_mapper, last_user_histories = process_data(
         interactions,
         impressions,
         cfg.list_size,
@@ -45,7 +45,7 @@ def main(cfg: DictConfig) -> None:
     log.info("Raw data processed successfully!")
 
     log.info("Saving processed data")
-    save_data(task, train, val, user_mapper, item_mapper)
+    save_data(task, train, val, user_mapper, item_mapper, last_user_histories)
     log.info("Processed data saved successfully!")
 
 

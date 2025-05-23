@@ -49,7 +49,7 @@ def process_data(
     list_size: int,
     split_date: str,
     user_history_size: int,
-) -> tuple[DataFrame, DataFrame, DataFrame, DataFrame]:
+) -> tuple[DataFrame, DataFrame, DataFrame, DataFrame, DataFrame]:
     """
     Process and clean raw interaction and impression data, splitting it into training and validation sets.
 
@@ -66,6 +66,7 @@ def process_data(
             - Processed validation dataset.
             - User-to-index mapping DataFrame.
             - Item-to-index mapping DataFrame.
+            - DataFrame with last histories of clicked items.
     """
     data = _preprocess_data(interactions, impressions)
 
@@ -150,17 +151,17 @@ def process_data(
         on=["timestamp", "user_idx"],
         how="left",
     )
-    tmp = train_clicks.loc[
+    last_user_histories = train_clicks.loc[
         train_clicks.groupby("user_idx")["timestamp"].idxmax()
     ].reset_index(drop=True)
-    tmp = tmp[["user_idx", "user_history"]]
-    val = val.merge(tmp, "inner", "user_idx")
+    last_user_histories = last_user_histories[["user_idx", "user_history"]]
+    val = val.merge(last_user_histories, "inner", "user_idx")
 
     # Sort train and val by timestamp
     train = train.sort_values("timestamp").reset_index(drop=True)
     val = val.sort_values("timestamp").reset_index(drop=True)
 
-    return train, val, user_mapper, item_mapper
+    return train, val, user_mapper, item_mapper, last_user_histories
 
 
 def save_data(
@@ -169,6 +170,7 @@ def save_data(
     val: DataFrame,
     user_mapper: DataFrame,
     item_mapper: DataFrame,
+    last_user_histories: DataFrame,
 ) -> None:
     """
     Save processed data and mappings as artifacts in ClearML.
@@ -179,11 +181,15 @@ def save_data(
         val (DataFrame): Processed validation dataset.
         user_mapper (DataFrame): User-to-index mapping.
         item_mapper (DataFrame): Item-to-index mapping.
+        last_user_histories (DataFrame): Last histories of clicked items.
     """
     task.upload_artifact("train", train, extension_name=".parquet")
     task.upload_artifact("validation", val, extension_name=".parquet")
     task.upload_artifact("user_mapper", user_mapper, extension_name=".parquet")
     task.upload_artifact("item_mapper", item_mapper, extension_name=".parquet")
+    task.upload_artifact(
+        "last_user_histories", last_user_histories, extension_name=".parquet"
+    )
 
 
 def _download_data(data_dir: Path) -> None:

@@ -8,6 +8,7 @@ lightning==2.5.0.post0
 torchmetrics==1.6.1
 clearml==1.17.1
 clearml-agent==1.9.3
+optuna==4.2.1
 flask==3.1.0
 
 # -------------- extras -------------- #
