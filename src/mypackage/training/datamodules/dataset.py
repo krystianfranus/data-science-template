@@ -98,14 +98,28 @@ def collate_fn(batch):
 
 
 class InferDataset(Dataset):
-    def __init__(self, n_users: int, n_items: int):
+    def __init__(
+        self,
+        n_users: int,
+        n_items: int,
+        user_history_based: bool,
+        last_user_histories: pd.DataFrame,
+    ):
         self.n_users = n_users
         self.n_items = n_items
+        self.user_history_based = user_history_based
+        if user_history_based:
+            self.last_user_histories = last_user_histories.set_index("user_idx")
+            self.last_user_histories = torch.from_numpy(
+                np.array(last_user_histories["user_history"].tolist())
+            )
 
     def __len__(self):
         return self.n_users * self.n_items
 
     def __getitem__(self, idx: int):
         user = idx // self.n_users
+        if self.user_history_based:
+            user = self.last_user_histories[user]
         item = idx % self.n_items
         return user, item

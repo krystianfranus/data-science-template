@@ -2,7 +2,7 @@
 
 defaults:
   - override /datamodule: simple
-  - override /model: simple_mlp
+  - override /model: mlp
 
 datamodule:
   num_workers: 7
@@ -20,7 +20,7 @@ model:
 trainer:
   accelerator: "gpu"
   devices: 1
-  max_epochs: 50
+  max_epochs: 2
 
 callbacks:
   early_stopping:

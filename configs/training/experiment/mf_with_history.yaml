@@ -2,7 +2,7 @@
 
 defaults:
   - override /datamodule: simple.yaml
-  - override /model: simple_mf.yaml
+  - override /model: mf.yaml
 
 datamodule:
   num_workers: 7
@@ -10,13 +10,13 @@ datamodule:
 
 model:
   embed_size: 64
-  user_history_based: false
-  lr: 0.0005
+  user_history_based: true
+  lr: 0.005
 
 trainer:
   accelerator: "gpu"
   devices: 1
-  max_epochs: 50
+  max_epochs: 2
 
 callbacks:
   early_stopping:

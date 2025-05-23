@@ -1,6 +1,6 @@
 defaults:
   - datamodule: simple
-  - model: simple_mlp
+  - model: mlp
   - callbacks: default
   - trainer: default
   

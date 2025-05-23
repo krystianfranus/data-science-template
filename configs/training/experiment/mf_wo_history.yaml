@@ -1,8 +1,8 @@
 # @package _global_
 
 defaults:
-  - override /datamodule: simple
-  - override /model: simple_mlp
+  - override /datamodule: simple.yaml
+  - override /model: mf.yaml
 
 datamodule:
   num_workers: 7
@@ -10,18 +10,15 @@ datamodule:
 
 model:
   embed_size: 64
-  n_layers: 3
-  dropout: 0.5
   user_history_based: false
-  lr1: 0.00005
-  lr2: 0.00001
-  weight_decay: 0.0
+  lr: 0.0005
 
 trainer:
   accelerator: "gpu"
   devices: 1
-  max_epochs: 50
+  max_epochs: 2
 
 callbacks:
   early_stopping:
     patience: 10
+  
