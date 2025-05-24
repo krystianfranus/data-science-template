@@ -31,17 +31,17 @@ def main():
             DiscreteParameterRange(
                 "Hydra/model.weight_decay", values=[0.01, 0.05, 0.1]
             ),
-            DiscreteParameterRange("Hydra/trainer.max_epochs", values=[100]),
+            DiscreteParameterRange("Hydra/trainer.max_epochs", values=[2]),
         ],
-        objective_metric_title="val",
-        objective_metric_series="auroc",
+        objective_metric_title="auroc",
+        objective_metric_series="val",
         objective_metric_sign="max_global",
         optimizer_class=OptimizerOptuna,
         max_number_of_concurrent_tasks=1,
         save_top_k_tasks_only=-1,
         total_max_jobs=10,
-        min_iteration_per_job=10 * 857,
-        max_iteration_per_job=50 * 857,
+        min_iteration_per_job=2 * 857,
+        max_iteration_per_job=2 * 857,
         # execution_queue="default",
         spawn_project="MyProjectHPO",
     )

@@ -5,7 +5,7 @@ defaults:
   - override /model: mlp
 
 datamodule:
-  num_workers: 7
+  num_workers: 11
   pin_memory: true
 
 model:
@@ -20,7 +20,7 @@ model:
 trainer:
   accelerator: "gpu"
   devices: 1
-  max_epochs: 2
+  max_epochs: 5
 
 callbacks:
   early_stopping:

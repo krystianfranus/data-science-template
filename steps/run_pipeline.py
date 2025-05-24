@@ -21,7 +21,7 @@ def main():
         cache_executed_step=True,
         parents=["DataProcessing"],
         parameter_override={
-            "Hydra/prev_task_id": "${DataProcessing.id}"
+            "Hydra/data_processing_task_id": "${DataProcessing.id}"
         },  # It is preferable
         # parameter_override={
         #     "Args/overrides": "['prev_task_id=${DataProcessing.id}']"
@@ -34,17 +34,20 @@ def main():
         base_task_name="Training",
         cache_executed_step=True,
         parents=["DataProcessing"],
-        parameter_override={"Hydra/prev_task_id": "${DataProcessing.id}"},
+        parameter_override={"Hydra/data_processing_task_id": "${DataProcessing.id}"},
     )
 
-    # pipe.add_step(
-    #     name="Inference",
-    #     base_task_project="MyProject",
-    #     base_task_name="Inference",
-    #     cache_executed_step=True,
-    #     parents=["Training"],
-    #     parameter_override={"Hydra/prev_task_id": "${Training.id}"},
-    # )
+    pipe.add_step(
+        name="Inference",
+        base_task_project="MyProject",
+        base_task_name="Inference",
+        cache_executed_step=True,
+        parents=["DataProcessing", "Training"],
+        parameter_override={
+            "Hydra/data_processing_task_id": "${DataProcessing.id}",
+            "Hydra/training_task_id": "${Training.id}",
+        },
+    )
 
     # for debugging purposes use local jobs
     # pipe.start_locally(run_pipeline_steps_locally=False)

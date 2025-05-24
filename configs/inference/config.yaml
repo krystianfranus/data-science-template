@@ -12,5 +12,5 @@ tags: ["${now:%Y-%m-%d}"]
 data_processing_task_id: null
 training_task_id: null
 model_type: "simple_mlp"  # simple_mlp, simple_mf
-num_workers: 8
+num_workers: 11
 pin_memory: true
