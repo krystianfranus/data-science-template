@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🚀⚡🔥 Recommender System Template (Implicit Data) 🚀⚡🔥
+# 🚀⚡🔥 Recommender System Template 🚀⚡🔥
 
 [![python](https://img.shields.io/badge/-Python_3.13.2-blue?logo=python&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![pytorch](https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org)
