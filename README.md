@@ -11,7 +11,7 @@
 
 </div>
 
-This repository provides a modular template for building recommender systems in Python using **implicit feedback data**. It is designed to streamline experimentation of recommendation models with a modern ML stack.
+This repository provides a modular template for building recommender systems in Python using **implicit feedback data**. It is designed to streamline experimentation of recommendation models with a modern ML stack. Two neural-based models are implemented: Matrix Factorization and MLP based on one of two user representations: user represented by its embedding or user represented by histories of clicked items (item embeddings).
 
 ### 🔧 Tech Stack
 - **PyTorch Lightning** – for scalable and structured model training
@@ -82,7 +82,7 @@ docker run -dit --gpus all --name ds-container ds-image  # Run container based o
 
 ## Run pipeline steps
 
-### 1. Data preparation
+### 1. Data processing
 
 ```bash
 python steps/process_data.py
