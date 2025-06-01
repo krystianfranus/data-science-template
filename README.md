@@ -103,9 +103,27 @@ After running this script the following datasets are being generated:
 python steps/evaluate_baselines.py
 ```
 
+Offline metrics (AUROC & NDCG) of baselines solutions:
+
+![alt text](static/evaluate_baselines.png)
+
+### 3. Train
+
+Training MLP based on user histories for 20 epochs:
+
 ```bash
-python steps/train.py
+python steps/train.py experiment=mlp_with_history trainer.max_epochs=20
+```
+
+![alt text](static/train.png)
+
+### 4. Rest of the steps
+
+```bash
+python steps/optimize_hparams.py
 python steps/infer.py
+python steps/serve.py
+python steps/run_pipeline.py
 ```
 
 ## Other useful commands:
