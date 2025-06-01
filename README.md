@@ -21,7 +21,9 @@ This repository provides a modular template for building recommender systems in 
 
 ### 📦 Dataset
 
-As an example, this template uses the [ContentWise Impressions](https://github.com/ContentWise/contentwise-impressions) dataset, which contains real-world implicit feedback data.
+As an example, this template uses the [ContentWise Impressions](https://github.com/ContentWise/contentwise-impressions) dataset - a collection of implicit interactions and impressions of movies and TV series from an Over-The-Top media service, which delivers its media contents over the Internet. ***In the preprocessing phase the dataset is being limited to content of movies only.***
+
+Exporatory data analysis can be found in [contentwise_eda.ipynb](notebooks/contentwise_eda.ipynb).
 
 ### 🚀 Use Cases
 
@@ -44,12 +46,12 @@ To make use of this repository, follow these steps:
 
 2. **Set up external services**  
 - Configure your connection to a ClearML server for experiment tracking.
-- (Optional) Set up access to AWS S3 if you want to use remote storage for data or models.
+- (Optional) Set up access to AWS S3 if you want to use remote storage for data or/and models.
 
 
 ## Configuration and installation
 
-Prepare environment variables in .env (see .env.example):
+Prepare environment variables related to ClearML and AWS in .env (see .env.example):
 ```
 CLEARML_CONFIG_FILE=clearml.conf
 CLEARML_WEB_HOST=<your-clearml-web-host>
@@ -67,22 +69,41 @@ Install with pip:
 pip install .  # Add flag -e to install in editable mode
 ```
 
-Using docker compose:
+(Optional) Using docker compose:
 ```bash
 docker compose up -d  # Run container based on docker-compose.yml
 ```
 
-Using plain docker:
+(Optional) Using plain docker:
 ```bash
 docker build -t ds-image .  # Build image defined in Dockerfile 
 docker run -dit --gpus all --name ds-container ds-image  # Run container based on that image
 ```
 
-## Quick start
+## Run pipeline steps
+
+### 1. Data preparation
 
 ```bash
 python steps/process_data.py
-python steps/compute_baseline.py
+```
+
+After running this script the following datasets are being generated:
+- `train.parquet` - behavioral data about 'movies consumption' for training (implict feedback)
+- `validation.parquet` - behavioral data for validation
+- `user_mapper.parquet` - user name to user index mapper
+- `item_mapper.parquet` - item name to item index mapper
+- `last_user_histories.parquet` - histories of last *n* consumed item per user - computed on train data
+
+![alt text](static/process_data.png)
+
+### 2. Baselines evalution
+
+```bash
+python steps/evaluate_baselines.py
+```
+
+```bash
 python steps/train.py
 python steps/infer.py
 ```
